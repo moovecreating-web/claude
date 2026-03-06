@@ -36,6 +36,16 @@ jobs:
         run: npm ci
         working-directory: facebook-ads-manager
 
+      - name: Validate token secret
+        run: |
+          if [ -z "$META_ACCESS_TOKEN" ]; then
+            echo "❌ META_ACCESS_TOKEN is EMPTY — secret not set or wrong name"
+            exit 1
+          fi
+          echo "✅ Token present — length: ${#META_ACCESS_TOKEN} chars"
+        env:
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+
       - name: Generate dashboard HTML
         run: node generate-dashboard.js
         working-directory: facebook-ads-manager

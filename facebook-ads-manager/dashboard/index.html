@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard – Attorney Isabela | Feb 27 – Mar 5, 2026</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#151424;color:#e0e0f0;min-height:100vh}
+  .header{display:flex;align-items:center;gap:12px;padding:14px 20px;background:#1c1b30;border-bottom:1px solid #2e2d4a;flex-wrap:wrap}
+  .logo{width:42px;height:42px;background:linear-gradient(135deg,#b8860b,#d4a017);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:bold;color:#fff;font-style:italic;flex-shrink:0}
+  .hinfo .htitle{font-size:14px;font-weight:600;color:#e0e0f0}
+  .hinfo .hsub{font-size:11px;color:#7070a0}
+  .pill{background:#2a2945;border:1px solid #3d3c5a;color:#b0afd0;padding:7px 14px;border-radius:6px;font-size:13px}
+  .kpis{display:flex;gap:12px;margin-left:auto;flex-wrap:wrap}
+  .kpi{background:#232240;border-radius:12px;padding:14px 22px;display:flex;align-items:center;gap:14px;min-width:190px}
+  .kico{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+  .kico.gold{background:radial-gradient(circle,#f0c040,#b8860b)}
+  .kico.blue{background:radial-gradient(circle,#5ab4ff,#1a5faa)}
+  .kico.green{background:radial-gradient(circle,#6de88a,#1a7a38)}
+  .klabel{font-size:12px;color:#8080a0;text-transform:uppercase;letter-spacing:.5px}
+  .kval{font-size:28px;font-weight:700;color:#fff;line-height:1.1}
+  .kdelta{font-size:12px;margin-top:2px}
+  .pos{color:#4cd97a}.neg{color:#f06060}
+  .upd{font-size:10px;color:#555570;margin-left:auto;align-self:flex-end;padding-bottom:2px}
+  .main{display:grid;grid-template-columns:160px 1fr 340px;gap:12px;padding:14px 18px}
+  .sidebar{display:flex;flex-direction:column;gap:10px}
+  .donut-card{background:#1e1d35;border-radius:12px;padding:14px}
+  .donut-card canvas{width:100%!important;max-height:100px}
+  .dleg{display:flex;flex-direction:column;gap:4px;margin-top:8px;font-size:11px}
+  .dleg-item{display:flex;align-items:center;gap:6px}
+  .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  .mcard{background:#1e1d35;border-radius:12px;padding:12px 14px}
+  .mlabel{font-size:11px;color:#7070a0;text-transform:uppercase;letter-spacing:.4px;margin-top:4px}
+  .mval{font-size:22px;font-weight:700;color:#fff}
+  .mdelta{font-size:11px}
+  .center{display:flex;flex-direction:column;gap:12px;min-width:0}
+  .cc{background:#1e1d35;border-radius:12px;padding:16px}
+  .cc h3{font-size:12px;color:#7070a0;margin-bottom:10px;text-transform:uppercase;letter-spacing:.4px}
+  .gauges{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .gauge{background:#1e1d35;border-radius:12px;padding:12px 10px;display:flex;flex-direction:column;align-items:center}
+  .glabel{font-size:11px;color:#7070a0;text-transform:uppercase;letter-spacing:.3px;margin-bottom:6px}
+  .gval{font-size:18px;font-weight:700;color:#fff;margin-top:-10px}
+  .grange{display:flex;justify-content:space-between;width:100%;font-size:10px;color:#555570;margin-top:2px;padding:0 4px}
+  .gwrap{width:100%;max-height:65px}
+  .rp{display:flex;flex-direction:column;gap:12px}
+  .funnel{background:#1e1d35;border-radius:12px;padding:16px}
+  .ftitle{font-size:11px;color:#7070a0;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px}
+  .frow{display:flex;align-items:center;justify-content:space-between}
+  .flabel{font-size:13px;color:#a0a0c0;width:60px}
+  .fbwrap{flex:1;position:relative;height:30px;margin:2px 8px}
+  .fb{position:absolute;left:50%;transform:translateX(-50%);height:100%;border-radius:4px}
+  .fval{font-size:16px;font-weight:700;color:#fff;width:80px;text-align:right}
+  .fconn{height:6px}
+  .tcard{background:#1e1d35;border-radius:12px;padding:14px}
+  .tcard h3{font-size:11px;color:#7070a0;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{color:#7070a0;font-weight:500;padding:4px 6px;text-align:right;border-bottom:1px solid #2e2d4a}
+  th:first-child{text-align:left}
+  td{padding:5px 6px;text-align:right;color:#c0c0d8;border-bottom:1px solid #1a1930}
+  td:first-child{text-align:left;color:#e0e0f0;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  tfoot tr td{color:#fff;font-weight:700;border-top:1px solid #2e2d4a;border-bottom:none}
+  tbody tr:hover td{background:#252445}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">A</div>
+  <div class="hinfo">
+    <div class="htitle">Attorney Isabela – Ad Performance</div>
+    <div class="hsub">Feb 27 – Mar 5, 2026</div>
+  </div>
+  <div class="pill">Feb 27 – Mar 5, 2026</div>
+  <div class="kpis">
+    <div class="kpi">
+      <div class="kico gold">💰</div>
+      <div>
+        <div class="klabel">Amount Spent</div>
+        <div class="kval">$232.90</div>
+        <div class="kdelta neg">▲ $14.78 vs prev</div>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="kico blue">🚀</div>
+      <div>
+        <div class="klabel">Leads</div>
+        <div class="kval">15</div>
+        <div class="kdelta neg">▼ 4 vs prev</div>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="kico green">👥</div>
+      <div>
+        <div class="klabel">Cost per Lead</div>
+        <div class="kval">$15.53</div>
+        <div class="kdelta neg">▲ $4.05 vs prev</div>
+      </div>
+    </div>
+  </div>
+  <div class="upd">Updated: 3/6/26, 11:16 AM (BRT)</div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="donut-card">
+      <canvas id="platformChart"></canvas>
+      <div class="dleg">
+        <div class="dleg-item"><div class="dot" style="background:#f0c040"></div><span style="color:#f0c040">Instagram 68.4%</span></div>
+        <div class="dleg-item"><div class="dot" style="background:#4a90e2"></div><span style="color:#4a90e2">Facebook 31.6%</span></div>
+      </div>
+    </div>
+    <div class="mcard">
+      <div class="mval">9,947</div>
+      <div class="mlabel">Impressions</div>
+    </div>
+    <div class="mcard">
+      <div class="mval">141</div>
+      <div class="mlabel">Clicks</div>
+    </div>
+    <div class="mcard">
+      <div class="mval">24.59%</div>
+      <div class="mlabel">Conversion Rate</div>
+    </div>
+  </div>
+
+  <!-- CENTER -->
+  <div class="center">
+    <div class="cc">
+      <h3>Amount Spent — Link Clicks</h3>
+      <canvas id="dailyChart" height="120"></canvas>
+    </div>
+    <div class="gauges">
+      <div class="gauge">
+        <div class="glabel">CPM</div>
+        <div class="gwrap"><canvas id="gCPM"></canvas></div>
+        <div class="gval">$23.41</div>
+        <div class="grange"><span>$0</span><span>$50</span></div>
+      </div>
+      <div class="gauge">
+        <div class="glabel">Invested / Clicks</div>
+        <div class="gwrap"><canvas id="gCPC"></canvas></div>
+        <div class="gval">$1.65</div>
+        <div class="grange"><span>$0</span><span>$10</span></div>
+      </div>
+      <div class="gauge">
+        <div class="glabel">Leads / Clicks</div>
+        <div class="gwrap"><canvas id="gConv"></canvas></div>
+        <div class="gval">24.59%</div>
+        <div class="grange"><span>0%</span><span>25%</span></div>
+      </div>
+    </div>
+    <div class="cc">
+      <h3>Clicked and Sent a Message</h3>
+      <canvas id="waChart" height="80"></canvas>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="rp">
+    <div class="funnel">
+      <div class="ftitle">Conversion Funnel</div>
+      <div class="frow">
+        <div class="flabel">Reach</div>
+        <div class="fbwrap"><div class="fb" style="width:100%;background:linear-gradient(90deg,#1ecfd6,#10a5aa)"></div></div>
+        <div class="fval">6,771</div>
+      </div>
+      <div class="fconn"></div>
+      <div class="frow">
+        <div class="flabel">Clicks</div>
+        <div class="fbwrap"><div class="fb" style="width:6%;background:linear-gradient(90deg,#1ecfd6,#10a5aa);opacity:.85"></div></div>
+        <div class="fval">141</div>
+      </div>
+      <div class="fconn"></div>
+      <div class="frow">
+        <div class="flabel">Leads</div>
+        <div class="fbwrap"><div class="fb" style="width:7%;background:linear-gradient(90deg,#c06020,#a04010)"></div></div>
+        <div class="fval">15</div>
+      </div>
+      <div class="fconn"></div>
+      <div class="frow">
+        <div class="flabel">CPL</div>
+        <div class="fbwrap"><div class="fb" style="width:31%;background:linear-gradient(90deg,#d0c080,#a09040);opacity:.85"></div></div>
+        <div class="fval">$15.53</div>
+      </div>
+    </div>
+    <div class="tcard">
+      <h3>Performance by Creative</h3>
+      <table>
+        <thead><tr><th>Creative</th><th>Clicks</th><th>Leads</th><th>CPL</th><th>CTR</th></tr></thead>
+        <tbody>
+          <tr><td title="02 - AJUSTE DE STATUS">02 - AJUSTE DE STAT…</td><td>73</td><td>7</td><td>$19.40</td><td>1.36%</td></tr>
+          <tr><td title="00 - DIVORCE">00 - DIVORCE</td><td>19</td><td>6</td><td>$9.21</td><td>0.78%</td></tr>
+          <tr><td title="[ASIANS CRIATIVE]">[ASIANS CRIATIVE]</td><td>49</td><td>2</td><td>$16.32</td><td>2.81%</td></tr>
+          <tr><td title="03 - EB3 - PT">03 - EB3 - PT</td><td>–</td><td>–</td><td>–</td><td>0.00%</td></tr>
+          <tr><td title="01 - I140 APPROVED">01 - I140 APPROVED</td><td>–</td><td>–</td><td>–</td><td>0.00%</td></tr>
+          <tr><td title="[NANNYS AUDIENCE]">[NANNYS AUDIENCE]</td><td>–</td><td>–</td><td>–</td><td>0.00%</td></tr>
+        </tbody>
+        <tfoot><tr><td>Grand total</td><td>141</td><td>15</td><td>$15.53</td><td>1.42%</td></tr></tfoot>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const labels = ["Feb 27","Feb 28","Mar 1","Mar 2","Mar 3","Mar 4","Mar 5"];
+
+new Chart(document.getElementById('platformChart'),{
+  type:'doughnut',
+  data:{datasets:[{data:[68.4,31.6],backgroundColor:['#f0c040','#4a90e2'],borderWidth:0,hoverOffset:4}]},
+  options:{cutout:'65%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.toFixed(1)+'%'}}}}
+});
+
+new Chart(document.getElementById('dailyChart'),{
+  data:{labels,datasets:[
+    {type:'bar',  label:'Amount Spent ($)',data:[36.79,30,29.43,43.61,40.6,28.46,24.01],      backgroundColor:'rgba(74,144,226,0.75)',borderRadius:4,yAxisID:'y'},
+    {type:'line', label:'Link Clicks',     data:[4,11,19,8,6,8,5], borderColor:'#fff',backgroundColor:'rgba(255,255,255,0.05)',pointBackgroundColor:'#fff',pointRadius:4,tension:0.3,yAxisID:'y2'}
+  ]},
+  options:{responsive:true,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{labels:{color:'#8080a0',boxWidth:12,font:{size:11}}}},
+    scales:{
+      x:{ticks:{color:'#7070a0',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'}},
+      y:{ticks:{color:'#7070a0',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'},position:'left'},
+      y2:{ticks:{color:'#a0a0c0',font:{size:10}},grid:{display:false},position:'right'}
+    }}
+});
+
+function gauge(id,pct,color){
+  new Chart(document.getElementById(id),{
+    type:'doughnut',
+    data:{datasets:[{data:[pct,1-pct],backgroundColor:[color,'#2a2945'],borderWidth:0,circumference:180,rotation:270}]},
+    options:{cutout:'72%',plugins:{legend:{display:false},tooltip:{enabled:false}}}
+  });
+}
+gauge('gCPM',  0.4683,  '#4caf50');
+gauge('gCPC',  0.1652,  '#4caf50');
+gauge('gConv', 0.9836, '#4caf50');
+
+new Chart(document.getElementById('waChart'),{
+  type:'line',
+  data:{labels,datasets:[{label:'Clicked and Sent a Message',data:[3,0,5,1,1,4,1],borderColor:'#f0c040',backgroundColor:'rgba(240,192,64,0.15)',fill:true,tension:0.4,pointRadius:4,pointBackgroundColor:'#f0c040'}]},
+  options:{responsive:true,plugins:{legend:{display:false}},
+    scales:{
+      x:{ticks:{color:'#7070a0',font:{size:10}},grid:{color:'rgba(255,255,255,0.04)'}},
+      y:{ticks:{color:'#7070a0',font:{size:10},stepSize:1},grid:{color:'rgba(255,255,255,0.04)'},min:0}
+    }}
+});
+</script>
+</body>
+</html>

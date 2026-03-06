@@ -1,0 +1,58 @@
+name: Update Attorney Isabela Dashboard
+
+on:
+  schedule:
+    # Runs every day at 08:00 BRT (11:00 UTC)
+    - cron: '0 11 * * *'
+  workflow_dispatch:
+    # Allow manual run from GitHub Actions tab
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: facebook-ads-manager/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: facebook-ads-manager
+
+      - name: Generate dashboard HTML
+        run: node generate-dashboard.js
+        working-directory: facebook-ads-manager
+        env:
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          META_AD_ACCOUNT_ID: '3762537707372777'
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: facebook-ads-manager/dashboard
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4

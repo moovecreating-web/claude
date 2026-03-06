@@ -1,7 +1,7 @@
 /**
  * generate-dashboard.js
- * Fetches live Meta Ads data and generates dashboard/index.html
- * Runs locally or via GitHub Actions (reads token from env var)
+ * Generates dashboard/index.html — interactive version with live filters.
+ * The HTML embeds the access token and fetches Meta API directly on filter changes.
  */
 
 import axios from 'axios';
@@ -11,257 +11,226 @@ import path from 'path';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// ── Config ─────────────────────────────────────────────────────────
 const TOKEN      = process.env.META_ACCESS_TOKEN;
 const ACCOUNT_ID = process.env.META_AD_ACCOUNT_ID || '3762537707372777';
 
-if (!TOKEN) {
-  console.error('❌  META_ACCESS_TOKEN not set. Exiting.');
-  process.exit(1);
-}
+if (!TOKEN) { console.error('❌  META_ACCESS_TOKEN not set'); process.exit(1); }
 
 const client = axios.create({
   baseURL: 'https://graph.facebook.com/v21.0',
   params: { access_token: TOKEN }
 });
 
-// ── Date helpers ────────────────────────────────────────────────────
 function fmt(d) { return d.toISOString().split('T')[0]; }
 function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
 
 const today     = new Date();
-const until     = addDays(today, -1);        // yesterday
-const since     = addDays(until, -6);        // 7-day window
-const prevUntil = addDays(since, -1);
-const prevSince = addDays(prevUntil, -6);
+const until     = addDays(today, -1);
+const since     = addDays(until, -6);
+const SINCE     = fmt(since);
+const UNTIL     = fmt(until);
 
-const SINCE      = fmt(since);
-const UNTIL      = fmt(until);
-const PREV_SINCE = fmt(prevSince);
-const PREV_UNTIL = fmt(prevUntil);
+async function main() {
+  // Fetch campaign list for the filter dropdown
+  let campaigns = [];
+  try {
+    const r = await client.get(`/act_${ACCOUNT_ID}/campaigns`, {
+      params: { fields: 'id,name,status', limit: 100, effective_status: JSON.stringify(['ACTIVE','PAUSED']) }
+    });
+    campaigns = r.data.data || [];
+    console.log(`✅  ${campaigns.length} campaigns loaded`);
+  } catch(e) {
+    console.warn('⚠️  Could not load campaigns:', e.response?.data?.error?.message || e.message);
+  }
 
-const displayPeriod = `${since.toLocaleDateString('en-US',{month:'short',day:'numeric'})} – ${until.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`;
-
-console.log(`📅  Period : ${SINCE} → ${UNTIL}`);
-console.log(`📅  Prev   : ${PREV_SINCE} → ${PREV_UNTIL}`);
-
-// ── API helpers ─────────────────────────────────────────────────────
-const getAction = (actions, type) =>
-  parseInt((actions || []).find(a => a.action_type === type)?.value || '0');
-
-async function fetch$(params) {
-  const r = await client.get(`/act_${ACCOUNT_ID}/insights`, { params });
-  return r.data.data || [];
+  const html = buildHTML(campaigns);
+  const outDir = path.join(__dirname, 'dashboard');
+  mkdirSync(outDir, { recursive: true });
+  writeFileSync(path.join(outDir, 'index.html'), html, 'utf8');
+  writeFileSync(path.join(outDir, '.nojekyll'), '', 'utf8');
+  console.log('✅  Dashboard written → dashboard/index.html');
 }
 
-// ── Number formatters ───────────────────────────────────────────────
-const fmt$ = v => v >= 10000 ? (v/1000).toFixed(1)+'k' : v.toFixed(2);
-const fmtN = v => Number(v).toLocaleString('en-US');
-const sign = (cur, prev, higherIsBetter) => {
-  const diff = cur - prev;
-  const up   = diff >= 0;
-  return {
-    arrow: up ? '▲' : '▼',
-    cls  : (up === higherIsBetter) ? 'pos' : 'neg',
-    val  : Math.abs(diff)
-  };
-};
+function buildHTML(campaigns) {
+  const campsJson   = JSON.stringify(campaigns);
+  const updatedAt   = new Date().toLocaleString('pt-BR', { timeZone:'America/Sao_Paulo' });
 
-// ── Main ────────────────────────────────────────────────────────────
-async function main() {
-  try {
-    const tr   = JSON.stringify({ since: SINCE,      until: UNTIL      });
-    const trPv = JSON.stringify({ since: PREV_SINCE, until: PREV_UNTIL });
-
-    console.log('🔄  Fetching data from Meta API…');
-    const [overall, daily, platform, byAd, previous] = await Promise.all([
-      fetch$({ fields: 'impressions,reach,clicks,spend,ctr,cpm,cpc,actions', time_range: tr,   level: 'account' }),
-      fetch$({ fields: 'impressions,clicks,spend,actions',                   time_range: tr,   time_increment: 1, level: 'account' }),
-      fetch$({ fields: 'spend,impressions',                                  time_range: tr,   breakdowns: 'publisher_platform', level: 'account' }),
-      fetch$({ fields: 'ad_name,impressions,clicks,spend,ctr,actions',       time_range: tr,   level: 'ad' }),
-      fetch$({ fields: 'spend,actions',                                      time_range: trPv, level: 'account' }),
-    ]);
-
-    // ── Overall KPIs ──────────────────────────────────────────────
-    const ov          = overall[0] || {};
-    const spend       = parseFloat(ov.spend       || 0);
-    const impressions = parseInt  (ov.impressions  || 0);
-    const reach       = parseInt  (ov.reach        || 0);
-    const clicks      = parseInt  (ov.clicks       || 0);
-    const cpm         = parseFloat(ov.cpm          || 0);
-    const cpc         = parseFloat(ov.cpc          || 0);
-    const ctr         = parseFloat(ov.ctr          || 0);
-    const linkClicks  = getAction(ov.actions, 'link_click');
-    const leads       = getAction(ov.actions, 'onsite_conversion.messaging_conversation_started_7d');
-    const cpl         = leads > 0 ? spend / leads : 0;
-    const convRate    = linkClicks > 0 ? (leads / linkClicks * 100) : 0;
-
-    // ── Previous period ───────────────────────────────────────────
-    const pv       = previous[0] || {};
-    const pvSpend  = parseFloat(pv.spend || 0);
-    const pvLeads  = getAction(pv.actions, 'onsite_conversion.messaging_conversation_started_7d');
-    const pvCpl    = pvLeads > 0 ? pvSpend / pvLeads : 0;
-
-    const dSpend = sign(spend, pvSpend, false);
-    const dLeads = sign(leads, pvLeads, true);
-    const dCpl   = sign(cpl,   pvCpl,   false);
-
-    // ── Daily arrays ─────────────────────────────────────────────
-    const dailyLabels = daily.map(d => {
-      const dt = new Date(d.date_start + 'T12:00:00Z');
-      return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    });
-    const dailySpend      = daily.map(d => parseFloat(d.spend || 0));
-    const dailyLinkClicks = daily.map(d => getAction(d.actions, 'link_click'));
-    const dailyWA         = daily.map(d => getAction(d.actions, 'onsite_conversion.messaging_conversation_started_7d'));
-
-    // ── Platform split ────────────────────────────────────────────
-    const igRow   = platform.find(p => p.publisher_platform === 'instagram');
-    const fbRow   = platform.find(p => p.publisher_platform === 'facebook');
-    const igSpend = parseFloat(igRow?.spend || 0);
-    const fbSpend = parseFloat(fbRow?.spend || 0);
-    const total   = igSpend + fbSpend || 1;
-    const igPct   = (igSpend / total * 100).toFixed(1);
-    const fbPct   = (fbSpend / total * 100).toFixed(1);
-
-    // ── Aggregate by ad name ──────────────────────────────────────
-    const adMap = {};
-    for (const row of byAd) {
-      const name = row.ad_name || 'Unknown';
-      if (!adMap[name]) adMap[name] = { clicks:0, leads:0, spend:0, impressions:0 };
-      adMap[name].clicks      += parseInt(row.clicks || 0);
-      adMap[name].leads       += getAction(row.actions, 'onsite_conversion.messaging_conversation_started_7d');
-      adMap[name].spend       += parseFloat(row.spend || 0);
-      adMap[name].impressions += parseInt(row.impressions || 0);
-    }
-
-    const adRows = Object.entries(adMap)
-      .sort((a, b) => b[1].leads - a[1].leads || b[1].spend - a[1].spend)
-      .slice(0, 8)
-      .map(([name, m]) => {
-        const adCpl = m.leads > 0 ? '$' + (m.spend / m.leads).toFixed(2) : '–';
-        const adCtr = m.impressions > 0 ? (m.clicks / m.impressions * 100).toFixed(2) + '%' : '–';
-        const short = name.length > 20 ? name.slice(0, 19) + '…' : name;
-        return `<tr><td title="${name}">${short}</td><td>${m.clicks||'–'}</td><td>${m.leads||'–'}</td><td>${adCpl}</td><td>${adCtr}</td></tr>`;
-      })
-      .join('\n          ');
-
-    // Gauge proportions (0–1)
-    const gaugeCpm  = Math.min(cpm  / 50,  1).toFixed(4);
-    const gaugeCpc  = Math.min(cpc  / 10,  1).toFixed(4);
-    const gaugeConv = Math.min(convRate / 25, 1).toFixed(4);
-
-    // Funnel bar widths (visual, not mathematically exact)
-    const fwClicks = Math.round(Math.min(clicks / reach * 100 * 3, 95));
-    const fwLeads  = Math.round(Math.min(leads  / reach * 100 * 30, 90));
-    const fwCpl    = Math.round(Math.min(cpl / 50 * 100, 85));
-
-    const updatedAt = new Date().toLocaleString('en-US', { timeZone:'America/Sao_Paulo', dateStyle:'short', timeStyle:'short' });
-
-    // ── HTML ──────────────────────────────────────────────────────
-    const html = `<!DOCTYPE html>
+return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard – Attorney Isabela | ${displayPeriod}</title>
+<title>Dashboard – Attorney Isabela</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"><\/script>
 <style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Segoe UI',Arial,sans-serif;background:#151424;color:#e0e0f0;min-height:100vh}
-  .header{display:flex;align-items:center;gap:12px;padding:14px 20px;background:#1c1b30;border-bottom:1px solid #2e2d4a;flex-wrap:wrap}
-  .logo{width:42px;height:42px;background:linear-gradient(135deg,#b8860b,#d4a017);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:bold;color:#fff;font-style:italic;flex-shrink:0}
-  .hinfo .htitle{font-size:14px;font-weight:600;color:#e0e0f0}
-  .hinfo .hsub{font-size:11px;color:#7070a0}
-  .pill{background:#2a2945;border:1px solid #3d3c5a;color:#b0afd0;padding:7px 14px;border-radius:6px;font-size:13px}
-  .kpis{display:flex;gap:12px;margin-left:auto;flex-wrap:wrap}
-  .kpi{background:#232240;border-radius:12px;padding:14px 22px;display:flex;align-items:center;gap:14px;min-width:190px}
-  .kico{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
-  .kico.gold{background:radial-gradient(circle,#f0c040,#b8860b)}
-  .kico.blue{background:radial-gradient(circle,#5ab4ff,#1a5faa)}
-  .kico.green{background:radial-gradient(circle,#6de88a,#1a7a38)}
-  .klabel{font-size:12px;color:#8080a0;text-transform:uppercase;letter-spacing:.5px}
-  .kval{font-size:28px;font-weight:700;color:#fff;line-height:1.1}
-  .kdelta{font-size:12px;margin-top:2px}
-  .pos{color:#4cd97a}.neg{color:#f06060}
-  .upd{font-size:10px;color:#555570;margin-left:auto;align-self:flex-end;padding-bottom:2px}
-  .main{display:grid;grid-template-columns:160px 1fr 340px;gap:12px;padding:14px 18px}
-  .sidebar{display:flex;flex-direction:column;gap:10px}
-  .donut-card{background:#1e1d35;border-radius:12px;padding:14px}
-  .donut-card canvas{width:100%!important;max-height:100px}
-  .dleg{display:flex;flex-direction:column;gap:4px;margin-top:8px;font-size:11px}
-  .dleg-item{display:flex;align-items:center;gap:6px}
-  .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-  .mcard{background:#1e1d35;border-radius:12px;padding:12px 14px}
-  .mlabel{font-size:11px;color:#7070a0;text-transform:uppercase;letter-spacing:.4px;margin-top:4px}
-  .mval{font-size:22px;font-weight:700;color:#fff}
-  .mdelta{font-size:11px}
-  .center{display:flex;flex-direction:column;gap:12px;min-width:0}
-  .cc{background:#1e1d35;border-radius:12px;padding:16px}
-  .cc h3{font-size:12px;color:#7070a0;margin-bottom:10px;text-transform:uppercase;letter-spacing:.4px}
-  .gauges{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-  .gauge{background:#1e1d35;border-radius:12px;padding:12px 10px;display:flex;flex-direction:column;align-items:center}
-  .glabel{font-size:11px;color:#7070a0;text-transform:uppercase;letter-spacing:.3px;margin-bottom:6px}
-  .gval{font-size:18px;font-weight:700;color:#fff;margin-top:-10px}
-  .grange{display:flex;justify-content:space-between;width:100%;font-size:10px;color:#555570;margin-top:2px;padding:0 4px}
-  .gwrap{width:100%;max-height:65px}
-  .rp{display:flex;flex-direction:column;gap:12px}
-  .funnel{background:#1e1d35;border-radius:12px;padding:16px}
-  .ftitle{font-size:11px;color:#7070a0;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px}
-  .frow{display:flex;align-items:center;justify-content:space-between}
-  .flabel{font-size:13px;color:#a0a0c0;width:60px}
-  .fbwrap{flex:1;position:relative;height:30px;margin:2px 8px}
-  .fb{position:absolute;left:50%;transform:translateX(-50%);height:100%;border-radius:4px}
-  .fval{font-size:16px;font-weight:700;color:#fff;width:80px;text-align:right}
-  .fconn{height:6px}
-  .tcard{background:#1e1d35;border-radius:12px;padding:14px}
-  .tcard h3{font-size:11px;color:#7070a0;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px}
-  table{width:100%;border-collapse:collapse;font-size:12px}
-  th{color:#7070a0;font-weight:500;padding:4px 6px;text-align:right;border-bottom:1px solid #2e2d4a}
-  th:first-child{text-align:left}
-  td{padding:5px 6px;text-align:right;color:#c0c0d8;border-bottom:1px solid #1a1930}
-  td:first-child{text-align:left;color:#e0e0f0;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  tfoot tr td{color:#fff;font-weight:700;border-top:1px solid #2e2d4a;border-bottom:none}
-  tbody tr:hover td{background:#252445}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#151424;color:#e0e0f0;min-height:100vh}
+
+/* ── HEADER ── */
+.header{display:flex;align-items:center;gap:10px;padding:12px 18px;background:#1c1b30;border-bottom:1px solid #2e2d4a;flex-wrap:wrap}
+.logo{width:40px;height:40px;background:linear-gradient(135deg,#b8860b,#d4a017);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:bold;color:#fff;font-style:italic;flex-shrink:0}
+.hinfo .htitle{font-size:13px;font-weight:600}
+.hinfo .hsub{font-size:10px;color:#7070a0}
+
+/* filters bar */
+.filters{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:4px}
+.filters label{font-size:11px;color:#7070a0}
+input[type=date]{background:#2a2945;border:1px solid #3d3c5a;color:#e0e0f0;padding:6px 10px;border-radius:6px;font-size:12px;cursor:pointer}
+input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.6)}
+
+/* campaign dropdown */
+.camp-wrap{position:relative}
+.camp-btn{background:#2a2945;border:1px solid #3d3c5a;color:#b0afd0;padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.camp-btn::after{content:'▾';font-size:10px}
+.camp-menu{display:none;position:absolute;top:calc(100% + 4px);left:0;background:#232240;border:1px solid #3d3c5a;border-radius:8px;padding:6px;min-width:240px;max-height:280px;overflow-y:auto;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.camp-menu.open{display:block}
+.camp-item{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:5px;cursor:pointer;font-size:12px}
+.camp-item:hover{background:#2e2d50}
+.camp-item input[type=checkbox]{accent-color:#4a90e2;width:14px;height:14px}
+.camp-item .cstatus{font-size:10px;padding:1px 5px;border-radius:3px;margin-left:auto}
+.cstatus.ACTIVE{background:#1a4a1a;color:#4cd97a}
+.cstatus.PAUSED{background:#3a2a1a;color:#e09060}
+.camp-actions{display:flex;gap:6px;padding:4px 8px 2px;border-top:1px solid #2e2d4a;margin-top:4px}
+.camp-actions button{flex:1;background:#2a2945;border:1px solid #3d3c5a;color:#b0afd0;padding:4px;border-radius:4px;font-size:11px;cursor:pointer}
+
+/* apply button */
+.apply-btn{background:#4a90e2;border:none;color:#fff;padding:7px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.apply-btn:hover{background:#357abd}
+.apply-btn:disabled{background:#2a4060;color:#6080a0;cursor:not-allowed}
+
+/* spinner */
+.spinner{display:none;width:16px;height:16px;border:2px solid #4a90e2;border-top-color:transparent;border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* KPI cards */
+.kpis{display:flex;gap:10px;margin-left:auto;flex-wrap:wrap}
+.kpi{background:#232240;border-radius:12px;padding:12px 18px;display:flex;align-items:center;gap:12px;min-width:170px}
+.kico{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.kico.gold{background:radial-gradient(circle,#f0c040,#b8860b)}
+.kico.blue{background:radial-gradient(circle,#5ab4ff,#1a5faa)}
+.kico.green{background:radial-gradient(circle,#6de88a,#1a7a38)}
+.klabel{font-size:11px;color:#8080a0;text-transform:uppercase;letter-spacing:.4px}
+.kval{font-size:24px;font-weight:700;color:#fff;line-height:1.1}
+.kdelta{font-size:11px;margin-top:2px}
+.pos{color:#4cd97a}.neg{color:#f06060}
+
+.upd{font-size:10px;color:#555570;margin-left:auto;align-self:flex-end;padding-bottom:2px;white-space:nowrap}
+
+/* ── MAIN GRID ── */
+.main{display:grid;grid-template-columns:160px 1fr 340px;gap:12px;padding:12px 18px}
+.sidebar{display:flex;flex-direction:column;gap:10px}
+.donut-card{background:#1e1d35;border-radius:12px;padding:14px}
+.donut-card canvas{width:100%!important;max-height:100px}
+.dleg{display:flex;flex-direction:column;gap:4px;margin-top:8px;font-size:11px}
+.dleg-item{display:flex;align-items:center;gap:6px}
+.dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.mcard{background:#1e1d35;border-radius:12px;padding:12px 14px}
+.mlabel{font-size:11px;color:#7070a0;text-transform:uppercase;letter-spacing:.4px;margin-top:4px}
+.mval{font-size:22px;font-weight:700;color:#fff}
+
+.center{display:flex;flex-direction:column;gap:12px;min-width:0}
+.cc{background:#1e1d35;border-radius:12px;padding:16px}
+.cc h3{font-size:11px;color:#7070a0;margin-bottom:10px;text-transform:uppercase;letter-spacing:.4px}
+.gauges{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.gauge{background:#1e1d35;border-radius:12px;padding:12px 10px;display:flex;flex-direction:column;align-items:center}
+.glabel{font-size:11px;color:#7070a0;text-transform:uppercase;letter-spacing:.3px;margin-bottom:6px}
+.gval{font-size:18px;font-weight:700;color:#fff;margin-top:-10px}
+.grange{display:flex;justify-content:space-between;width:100%;font-size:10px;color:#555570;margin-top:2px;padding:0 4px}
+.gwrap{width:100%;max-height:65px}
+
+.rp{display:flex;flex-direction:column;gap:12px}
+.funnel{background:#1e1d35;border-radius:12px;padding:16px}
+.ftitle{font-size:11px;color:#7070a0;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px}
+.frow{display:flex;align-items:center;justify-content:space-between}
+.flabel{font-size:13px;color:#a0a0c0;width:60px}
+.fbwrap{flex:1;position:relative;height:28px;margin:2px 8px}
+.fb{position:absolute;left:50%;transform:translateX(-50%);height:100%;border-radius:4px;transition:width .5s}
+.fval{font-size:15px;font-weight:700;color:#fff;width:80px;text-align:right}
+.fconn{height:5px}
+
+.tcard{background:#1e1d35;border-radius:12px;padding:14px}
+.tcard h3{font-size:11px;color:#7070a0;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{color:#7070a0;font-weight:500;padding:4px 6px;text-align:right;border-bottom:1px solid #2e2d4a}
+th:first-child{text-align:left}
+td{padding:5px 6px;text-align:right;color:#c0c0d8;border-bottom:1px solid #1a1930}
+td:first-child{text-align:left;color:#e0e0f0;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+tfoot tr td{color:#fff;font-weight:700;border-top:1px solid #2e2d4a;border-bottom:none}
+tbody tr:hover td{background:#252445}
+
+/* overlay loading */
+.loading-overlay{display:none;position:fixed;inset:0;background:rgba(21,20,36,.7);z-index:200;align-items:center;justify-content:center;flex-direction:column;gap:12px}
+.loading-overlay.show{display:flex}
+.big-spinner{width:44px;height:44px;border:4px solid #4a90e2;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite}
+.loading-overlay p{color:#b0afd0;font-size:14px}
 </style>
 </head>
 <body>
+
+<div class="loading-overlay" id="overlay">
+  <div class="big-spinner"></div>
+  <p>Loading data…</p>
+</div>
 
 <!-- HEADER -->
 <div class="header">
   <div class="logo">A</div>
   <div class="hinfo">
     <div class="htitle">Attorney Isabela – Ad Performance</div>
-    <div class="hsub">${displayPeriod}</div>
+    <div class="hsub" id="periodLabel">–</div>
   </div>
-  <div class="pill">${displayPeriod}</div>
+
+  <!-- DATE FILTERS -->
+  <div class="filters">
+    <label>From</label>
+    <input type="date" id="dateSince" value="${SINCE}">
+    <label>To</label>
+    <input type="date" id="dateUntil" value="${UNTIL}">
+
+    <!-- CAMPAIGN FILTER -->
+    <div class="camp-wrap" id="campWrap">
+      <div class="camp-btn" id="campBtn">All Campaigns</div>
+      <div class="camp-menu" id="campMenu">
+        <div class="camp-actions">
+          <button onclick="selectAllCamps()">Select All</button>
+          <button onclick="clearCamps()">Clear</button>
+        </div>
+        <div id="campList"></div>
+      </div>
+    </div>
+
+    <button class="apply-btn" id="applyBtn" onclick="applyFilters()">Apply</button>
+    <div class="spinner" id="spinner"></div>
+  </div>
+
+  <!-- KPI CARDS -->
   <div class="kpis">
     <div class="kpi">
       <div class="kico gold">💰</div>
       <div>
         <div class="klabel">Amount Spent</div>
-        <div class="kval">$${fmt$(spend)}</div>
-        <div class="kdelta ${dSpend.cls}">${dSpend.arrow} $${dSpend.val.toFixed(2)} vs prev</div>
+        <div class="kval" id="kSpend">–</div>
+        <div class="kdelta" id="kSpendD">–</div>
       </div>
     </div>
     <div class="kpi">
       <div class="kico blue">🚀</div>
       <div>
         <div class="klabel">Leads</div>
-        <div class="kval">${leads}</div>
-        <div class="kdelta ${dLeads.cls}">${dLeads.arrow} ${dLeads.val} vs prev</div>
+        <div class="kval" id="kLeads">–</div>
+        <div class="kdelta" id="kLeadsD">–</div>
       </div>
     </div>
     <div class="kpi">
       <div class="kico green">👥</div>
       <div>
         <div class="klabel">Cost per Lead</div>
-        <div class="kval">$${cpl.toFixed(2)}</div>
-        <div class="kdelta ${dCpl.cls}">${dCpl.arrow} $${dCpl.val.toFixed(2)} vs prev</div>
+        <div class="kval" id="kCpl">–</div>
+        <div class="kdelta" id="kCplD">–</div>
       </div>
     </div>
   </div>
-  <div class="upd">Updated: ${updatedAt} (BRT)</div>
+  <div class="upd" id="updLabel">Built: ${updatedAt}</div>
 </div>
 
 <!-- MAIN -->
@@ -272,22 +241,13 @@ async function main() {
     <div class="donut-card">
       <canvas id="platformChart"></canvas>
       <div class="dleg">
-        <div class="dleg-item"><div class="dot" style="background:#f0c040"></div><span style="color:#f0c040">Instagram ${igPct}%</span></div>
-        <div class="dleg-item"><div class="dot" style="background:#4a90e2"></div><span style="color:#4a90e2">Facebook ${fbPct}%</span></div>
+        <div class="dleg-item"><div class="dot" style="background:#f0c040"></div><span id="igLegend" style="color:#f0c040">Instagram –%</span></div>
+        <div class="dleg-item"><div class="dot" style="background:#4a90e2"></div><span id="fbLegend" style="color:#4a90e2">Facebook –%</span></div>
       </div>
     </div>
-    <div class="mcard">
-      <div class="mval">${fmtN(impressions)}</div>
-      <div class="mlabel">Impressions</div>
-    </div>
-    <div class="mcard">
-      <div class="mval">${fmtN(clicks)}</div>
-      <div class="mlabel">Clicks</div>
-    </div>
-    <div class="mcard">
-      <div class="mval">${convRate.toFixed(2)}%</div>
-      <div class="mlabel">Conversion Rate</div>
-    </div>
+    <div class="mcard"><div class="mval" id="mImpressions">–</div><div class="mlabel">Impressions</div></div>
+    <div class="mcard"><div class="mval" id="mClicks">–</div><div class="mlabel">Clicks</div></div>
+    <div class="mcard"><div class="mval" id="mConvRate">–</div><div class="mlabel">Conversion Rate</div></div>
   </div>
 
   <!-- CENTER -->
@@ -300,19 +260,19 @@ async function main() {
       <div class="gauge">
         <div class="glabel">CPM</div>
         <div class="gwrap"><canvas id="gCPM"></canvas></div>
-        <div class="gval">$${cpm.toFixed(2)}</div>
+        <div class="gval" id="gvCPM">–</div>
         <div class="grange"><span>$0</span><span>$50</span></div>
       </div>
       <div class="gauge">
         <div class="glabel">Invested / Clicks</div>
         <div class="gwrap"><canvas id="gCPC"></canvas></div>
-        <div class="gval">$${cpc.toFixed(2)}</div>
+        <div class="gval" id="gvCPC">–</div>
         <div class="grange"><span>$0</span><span>$10</span></div>
       </div>
       <div class="gauge">
         <div class="glabel">Leads / Clicks</div>
         <div class="gwrap"><canvas id="gConv"></canvas></div>
-        <div class="gval">${convRate.toFixed(2)}%</div>
+        <div class="gval" id="gvConv">–</div>
         <div class="grange"><span>0%</span><span>25%</span></div>
       </div>
     </div>
@@ -326,38 +286,20 @@ async function main() {
   <div class="rp">
     <div class="funnel">
       <div class="ftitle">Conversion Funnel</div>
-      <div class="frow">
-        <div class="flabel">Reach</div>
-        <div class="fbwrap"><div class="fb" style="width:100%;background:linear-gradient(90deg,#1ecfd6,#10a5aa)"></div></div>
-        <div class="fval">${fmtN(reach)}</div>
-      </div>
+      <div class="frow"><div class="flabel">Reach</div><div class="fbwrap"><div class="fb" id="fReachBar" style="width:100%;background:linear-gradient(90deg,#1ecfd6,#10a5aa)"></div></div><div class="fval" id="fReach">–</div></div>
       <div class="fconn"></div>
-      <div class="frow">
-        <div class="flabel">Clicks</div>
-        <div class="fbwrap"><div class="fb" style="width:${fwClicks}%;background:linear-gradient(90deg,#1ecfd6,#10a5aa);opacity:.85"></div></div>
-        <div class="fval">${fmtN(clicks)}</div>
-      </div>
+      <div class="frow"><div class="flabel">Clicks</div><div class="fbwrap"><div class="fb" id="fClicksBar" style="background:linear-gradient(90deg,#1ecfd6,#10a5aa);opacity:.85"></div></div><div class="fval" id="fClicks">–</div></div>
       <div class="fconn"></div>
-      <div class="frow">
-        <div class="flabel">Leads</div>
-        <div class="fbwrap"><div class="fb" style="width:${fwLeads}%;background:linear-gradient(90deg,#c06020,#a04010)"></div></div>
-        <div class="fval">${leads}</div>
-      </div>
+      <div class="frow"><div class="flabel">Leads</div><div class="fbwrap"><div class="fb" id="fLeadsBar" style="background:linear-gradient(90deg,#c06020,#a04010)"></div></div><div class="fval" id="fLeads">–</div></div>
       <div class="fconn"></div>
-      <div class="frow">
-        <div class="flabel">CPL</div>
-        <div class="fbwrap"><div class="fb" style="width:${fwCpl}%;background:linear-gradient(90deg,#d0c080,#a09040);opacity:.85"></div></div>
-        <div class="fval">$${cpl.toFixed(2)}</div>
-      </div>
+      <div class="frow"><div class="flabel">CPL</div><div class="fbwrap"><div class="fb" id="fCplBar" style="background:linear-gradient(90deg,#d0c080,#a09040);opacity:.85"></div></div><div class="fval" id="fCpl">–</div></div>
     </div>
     <div class="tcard">
       <h3>Performance by Creative</h3>
       <table>
         <thead><tr><th>Creative</th><th>Clicks</th><th>Leads</th><th>CPL</th><th>CTR</th></tr></thead>
-        <tbody>
-          ${adRows}
-        </tbody>
-        <tfoot><tr><td>Grand total</td><td>${fmtN(clicks)}</td><td>${leads}</td><td>$${cpl.toFixed(2)}</td><td>${ctr.toFixed(2)}%</td></tr></tfoot>
+        <tbody id="adTableBody"></tbody>
+        <tfoot><tr><td>Total</td><td id="ftClicks">–</td><td id="ftLeads">–</td><td id="ftCpl">–</td><td id="ftCtr">–</td></tr></tfoot>
       </table>
     </div>
   </div>
@@ -365,67 +307,294 @@ async function main() {
 </div>
 
 <script>
-const labels = ${JSON.stringify(dailyLabels)};
+// ── CONFIG (baked in at build time) ────────────────────────────────
+const ACCESS_TOKEN = '${TOKEN}';
+const ACCOUNT_ID   = '${ACCOUNT_ID}';
+const BASE        = 'https://graph.facebook.com/v21.0';
+const CAMPAIGNS   = ${campsJson};
 
-new Chart(document.getElementById('platformChart'),{
-  type:'doughnut',
-  data:{datasets:[{data:[${igPct},${fbPct}],backgroundColor:['#f0c040','#4a90e2'],borderWidth:0,hoverOffset:4}]},
-  options:{cutout:'65%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.toFixed(1)+'%'}}}}
+// ── STATE ──────────────────────────────────────────────────────────
+let charts = {};
+let selectedCampIds = []; // empty = all
+
+// ── HELPERS ────────────────────────────────────────────────────────
+const ga = (actions, type) =>
+  parseInt((actions||[]).find(a=>a.action_type===type)?.value||'0');
+
+const fmtN = v => Number(v).toLocaleString('en-US');
+const fmt$ = v => '$' + (v>=10000?(v/1000).toFixed(1)+'k':v.toFixed(2));
+
+function deltaHtml(cur, prev, higherIsBetter) {
+  const diff = cur - prev;
+  const up   = diff >= 0;
+  const cls  = (up === higherIsBetter) ? 'pos' : 'neg';
+  const arr  = up ? '▲' : '▼';
+  const abs  = Math.abs(diff);
+  return \`<span class="\${cls}">\${arr} \${typeof cur==='number'&&cur%1!==0?abs.toFixed(2):abs} vs prev</span>\`;
+}
+
+async function api(path, params={}) {
+  const url = new URL(BASE + path);
+  url.searchParams.set('access_token', ACCESS_TOKEN);
+  Object.entries(params).forEach(([k,v])=>url.searchParams.set(k,v));
+  const r = await fetch(url.toString());
+  const j = await r.json();
+  if (j.error) throw new Error(j.error.message);
+  return j.data || j;
+}
+
+// ── CAMPAIGN FILTER UI ─────────────────────────────────────────────
+function buildCampMenu() {
+  const list = document.getElementById('campList');
+  list.innerHTML = CAMPAIGNS.map(c => \`
+    <label class="camp-item">
+      <input type="checkbox" value="\${c.id}" onchange="updateCampLabel()">
+      <span>\${c.name}</span>
+      <span class="cstatus \${c.status}">\${c.status}</span>
+    </label>\`).join('');
+}
+
+function updateCampLabel() {
+  const checked = [...document.querySelectorAll('#campList input:checked')];
+  selectedCampIds = checked.map(c=>c.value);
+  const btn = document.getElementById('campBtn');
+  btn.textContent = selectedCampIds.length === 0
+    ? 'All Campaigns'
+    : selectedCampIds.length === 1
+      ? CAMPAIGNS.find(c=>c.id===selectedCampIds[0])?.name || '1 campaign'
+      : selectedCampIds.length + ' campaigns';
+}
+
+function selectAllCamps() {
+  document.querySelectorAll('#campList input').forEach(i=>i.checked=true);
+  updateCampLabel();
+}
+function clearCamps() {
+  document.querySelectorAll('#campList input').forEach(i=>i.checked=false);
+  updateCampLabel();
+}
+
+// Toggle menu open/close
+document.getElementById('campBtn').addEventListener('click', e=>{
+  e.stopPropagation();
+  document.getElementById('campMenu').classList.toggle('open');
 });
+document.addEventListener('click', ()=>document.getElementById('campMenu').classList.remove('open'));
+document.getElementById('campMenu').addEventListener('click', e=>e.stopPropagation());
 
-new Chart(document.getElementById('dailyChart'),{
-  data:{labels,datasets:[
-    {type:'bar',  label:'Amount Spent ($)',data:${JSON.stringify(dailySpend)},      backgroundColor:'rgba(74,144,226,0.75)',borderRadius:4,yAxisID:'y'},
-    {type:'line', label:'Link Clicks',     data:${JSON.stringify(dailyLinkClicks)}, borderColor:'#fff',backgroundColor:'rgba(255,255,255,0.05)',pointBackgroundColor:'#fff',pointRadius:4,tension:0.3,yAxisID:'y2'}
-  ]},
-  options:{responsive:true,interaction:{mode:'index',intersect:false},
-    plugins:{legend:{labels:{color:'#8080a0',boxWidth:12,font:{size:11}}}},
-    scales:{
-      x:{ticks:{color:'#7070a0',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'}},
-      y:{ticks:{color:'#7070a0',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'},position:'left'},
-      y2:{ticks:{color:'#a0a0c0',font:{size:10}},grid:{display:false},position:'right'}
-    }}
-});
+// ── FETCH DATA ─────────────────────────────────────────────────────
+async function fetchData(since, until) {
+  const tr   = JSON.stringify({since, until});
+  const days = Math.round((new Date(until)-new Date(since))/(86400000)) + 1;
+  const prevUntil = new Date(since); prevUntil.setDate(prevUntil.getDate()-1);
+  const prevSince = new Date(prevUntil); prevSince.setDate(prevSince.getDate()-days+1);
+  const trPv = JSON.stringify({since: prevSince.toISOString().split('T')[0], until: prevUntil.toISOString().split('T')[0]});
 
-function gauge(id,pct,color){
-  new Chart(document.getElementById(id),{
+  const filtering = selectedCampIds.length > 0
+    ? JSON.stringify([{field:'campaign.id',operator:'IN',value:selectedCampIds}])
+    : undefined;
+
+  const baseP = {time_range: tr, level:'account', ...(filtering&&{filtering})};
+  const pvP   = {time_range: trPv, level:'account', ...(filtering&&{filtering})};
+
+  const insPath = \`/act_\${ACCOUNT_ID}/insights\`;
+
+  const [ov, daily, plat, byAd, prev] = await Promise.all([
+    api(insPath, {...baseP, fields:'impressions,reach,clicks,spend,ctr,cpm,cpc,actions'}),
+    api(insPath, {...baseP, fields:'impressions,clicks,spend,actions', time_increment:1}),
+    api(insPath, {time_range:tr,level:'account',...(filtering&&{filtering}),fields:'spend,impressions',breakdowns:'publisher_platform'}),
+    api(insPath, {...baseP, fields:'ad_name,impressions,clicks,spend,ctr,actions', level:'ad'}),
+    api(insPath, {...pvP,   fields:'spend,actions'}),
+  ]);
+
+  return { ov: ov[0]||{}, daily: Array.isArray(daily)?daily:[], plat: Array.isArray(plat)?plat:[], byAd: Array.isArray(byAd)?byAd:[], prev: prev[0]||{} };
+}
+
+// ── RENDER ─────────────────────────────────────────────────────────
+function render(data, since, until) {
+  const { ov, daily, plat, byAd, prev } = data;
+
+  const spend       = parseFloat(ov.spend||0);
+  const impressions = parseInt(ov.impressions||0);
+  const reach       = parseInt(ov.reach||0);
+  const clicks      = parseInt(ov.clicks||0);
+  const cpm         = parseFloat(ov.cpm||0);
+  const cpc         = parseFloat(ov.cpc||0);
+  const ctr         = parseFloat(ov.ctr||0);
+  const linkClicks  = ga(ov.actions,'link_click');
+  const leads       = ga(ov.actions,'onsite_conversion.messaging_conversation_started_7d');
+  const cpl         = leads>0 ? spend/leads : 0;
+  const convRate    = linkClicks>0 ? leads/linkClicks*100 : 0;
+
+  const pvSpend = parseFloat(prev.spend||0);
+  const pvLeads = ga(prev.actions,'onsite_conversion.messaging_conversation_started_7d');
+  const pvCpl   = pvLeads>0 ? pvSpend/pvLeads : 0;
+
+  // Period label
+  const fmt = d => new Date(d+'T12:00:00Z').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  document.getElementById('periodLabel').textContent = fmt(since) + ' – ' + fmt(until);
+
+  // KPIs
+  document.getElementById('kSpend').textContent  = fmt$(spend);
+  document.getElementById('kLeads').textContent  = leads;
+  document.getElementById('kCpl').textContent    = fmt$(cpl);
+  document.getElementById('kSpendD').innerHTML   = deltaHtml(spend, pvSpend, false);
+  document.getElementById('kLeadsD').innerHTML   = deltaHtml(leads, pvLeads, true);
+  document.getElementById('kCplD').innerHTML     = deltaHtml(cpl,   pvCpl,   false);
+
+  // Sidebar metrics
+  document.getElementById('mImpressions').textContent = fmtN(impressions);
+  document.getElementById('mClicks').textContent      = fmtN(clicks);
+  document.getElementById('mConvRate').textContent    = convRate.toFixed(2)+'%';
+
+  // Platform donut
+  const ig = plat.find(p=>p.publisher_platform==='instagram');
+  const fb = plat.find(p=>p.publisher_platform==='facebook');
+  const igS = parseFloat(ig?.spend||0), fbS = parseFloat(fb?.spend||0);
+  const tot = igS+fbS||1;
+  const igP = (igS/tot*100).toFixed(1), fbP = (fbS/tot*100).toFixed(1);
+  document.getElementById('igLegend').textContent = 'Instagram '+igP+'%';
+  document.getElementById('fbLegend').textContent = 'Facebook '+fbP+'%';
+  updateChart('platformChart', c=>{
+    c.data.datasets[0].data = [igP, fbP];
+    c.update();
+  });
+
+  // Daily chart
+  const labels       = daily.map(d=>new Date(d.date_start+'T12:00:00Z').toLocaleDateString('en-US',{month:'short',day:'numeric'}));
+  const dailySpend   = daily.map(d=>parseFloat(d.spend||0));
+  const dailyClicks  = daily.map(d=>ga(d.actions,'link_click'));
+  const dailyWA      = daily.map(d=>ga(d.actions,'onsite_conversion.messaging_conversation_started_7d'));
+
+  updateChart('dailyChart', c=>{
+    c.data.labels = labels;
+    c.data.datasets[0].data = dailySpend;
+    c.data.datasets[1].data = dailyClicks;
+    c.update();
+  });
+
+  // Gauges
+  setGauge('gCPM',  cpm,      50,  'gvCPM',  '$'+cpm.toFixed(2));
+  setGauge('gCPC',  cpc,      10,  'gvCPC',  '$'+cpc.toFixed(2));
+  setGauge('gConv', convRate, 25,  'gvConv', convRate.toFixed(2)+'%');
+
+  // WA chart
+  updateChart('waChart', c=>{
+    c.data.labels = labels;
+    c.data.datasets[0].data = dailyWA;
+    c.update();
+  });
+
+  // Funnel
+  document.getElementById('fReach').textContent  = fmtN(reach);
+  document.getElementById('fClicks').textContent = fmtN(clicks);
+  document.getElementById('fLeads').textContent  = leads;
+  document.getElementById('fCpl').textContent    = fmt$(cpl);
+  document.getElementById('fClicksBar').style.width = Math.min(reach>0?clicks/reach*100*3:0,95)+'%';
+  document.getElementById('fLeadsBar').style.width  = Math.min(reach>0?leads/reach*100*30:0,90)+'%';
+  document.getElementById('fCplBar').style.width    = Math.min(cpl/50*100,85)+'%';
+
+  // Ad table
+  const adMap = {};
+  for (const row of byAd) {
+    const name = row.ad_name||'Unknown';
+    if (!adMap[name]) adMap[name]={clicks:0,leads:0,spend:0,impressions:0};
+    adMap[name].clicks      += parseInt(row.clicks||0);
+    adMap[name].leads       += ga(row.actions,'onsite_conversion.messaging_conversation_started_7d');
+    adMap[name].spend       += parseFloat(row.spend||0);
+    adMap[name].impressions += parseInt(row.impressions||0);
+  }
+  const rows = Object.entries(adMap).sort((a,b)=>b[1].leads-a[1].leads||b[1].spend-a[1].spend).slice(0,8);
+  document.getElementById('adTableBody').innerHTML = rows.map(([name,m])=>{
+    const adCpl = m.leads>0 ? '$'+(m.spend/m.leads).toFixed(2) : '–';
+    const adCtr = m.impressions>0 ? (m.clicks/m.impressions*100).toFixed(2)+'%' : '–';
+    const short = name.length>20 ? name.slice(0,19)+'…' : name;
+    return \`<tr><td title="\${name}">\${short}</td><td>\${m.clicks||'–'}</td><td>\${m.leads||'–'}</td><td>\${adCpl}</td><td>\${adCtr}</td></tr>\`;
+  }).join('');
+  document.getElementById('ftClicks').textContent = fmtN(clicks);
+  document.getElementById('ftLeads').textContent  = leads;
+  document.getElementById('ftCpl').textContent    = fmt$(cpl);
+  document.getElementById('ftCtr').textContent    = ctr.toFixed(2)+'%';
+}
+
+// ── CHART HELPERS ──────────────────────────────────────────────────
+function updateChart(id, fn) { if (charts[id]) fn(charts[id]); }
+
+function setGauge(id, value, max, labelId, text) {
+  const pct = Math.min(value/max, 1);
+  if (charts[id]) {
+    charts[id].data.datasets[0].data = [pct, 1-pct];
+    charts[id].update();
+  }
+  document.getElementById(labelId).textContent = text;
+}
+
+function initCharts() {
+  charts['platformChart'] = new Chart(document.getElementById('platformChart'),{
     type:'doughnut',
-    data:{datasets:[{data:[pct,1-pct],backgroundColor:[color,'#2a2945'],borderWidth:0,circumference:180,rotation:270}]},
-    options:{cutout:'72%',plugins:{legend:{display:false},tooltip:{enabled:false}}}
+    data:{datasets:[{data:[50,50],backgroundColor:['#f0c040','#4a90e2'],borderWidth:0,hoverOffset:4}]},
+    options:{cutout:'65%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.toFixed(1)+'%'}}}}
+  });
+
+  charts['dailyChart'] = new Chart(document.getElementById('dailyChart'),{
+    data:{labels:[],datasets:[
+      {type:'bar', label:'Amount Spent ($)',data:[],backgroundColor:'rgba(74,144,226,0.75)',borderRadius:4,yAxisID:'y'},
+      {type:'line',label:'Link Clicks',     data:[],borderColor:'#fff',backgroundColor:'rgba(255,255,255,0.05)',pointBackgroundColor:'#fff',pointRadius:4,tension:0.3,yAxisID:'y2'}
+    ]},
+    options:{responsive:true,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{labels:{color:'#8080a0',boxWidth:12,font:{size:11}}}},
+      scales:{x:{ticks:{color:'#7070a0',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'}},
+              y:{ticks:{color:'#7070a0',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'},position:'left'},
+              y2:{ticks:{color:'#a0a0c0',font:{size:10}},grid:{display:false},position:'right'}}}
+  });
+
+  ['gCPM','gCPC','gConv'].forEach(id=>{
+    charts[id] = new Chart(document.getElementById(id),{
+      type:'doughnut',
+      data:{datasets:[{data:[0.5,0.5],backgroundColor:['#4caf50','#2a2945'],borderWidth:0,circumference:180,rotation:270}]},
+      options:{cutout:'72%',plugins:{legend:{display:false},tooltip:{enabled:false}}}
+    });
+  });
+
+  charts['waChart'] = new Chart(document.getElementById('waChart'),{
+    type:'line',
+    data:{labels:[],datasets:[{label:'Clicked and Sent a Message',data:[],borderColor:'#f0c040',backgroundColor:'rgba(240,192,64,0.15)',fill:true,tension:0.4,pointRadius:4,pointBackgroundColor:'#f0c040'}]},
+    options:{responsive:true,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{color:'#7070a0',font:{size:10}},grid:{color:'rgba(255,255,255,0.04)'}},
+              y:{ticks:{color:'#7070a0',font:{size:10},stepSize:1},grid:{color:'rgba(255,255,255,0.04)'},min:0}}}
   });
 }
-gauge('gCPM',  ${gaugeCpm},  '#4caf50');
-gauge('gCPC',  ${gaugeCpc},  '#4caf50');
-gauge('gConv', ${gaugeConv}, '#4caf50');
 
-new Chart(document.getElementById('waChart'),{
-  type:'line',
-  data:{labels,datasets:[{label:'Clicked and Sent a Message',data:${JSON.stringify(dailyWA)},borderColor:'#f0c040',backgroundColor:'rgba(240,192,64,0.15)',fill:true,tension:0.4,pointRadius:4,pointBackgroundColor:'#f0c040'}]},
-  options:{responsive:true,plugins:{legend:{display:false}},
-    scales:{
-      x:{ticks:{color:'#7070a0',font:{size:10}},grid:{color:'rgba(255,255,255,0.04)'}},
-      y:{ticks:{color:'#7070a0',font:{size:10},stepSize:1},grid:{color:'rgba(255,255,255,0.04)'},min:0}
-    }}
-});
-<\/script>
-</body>
-</html>`;
-
-    // ── Write output ───────────────────────────────────────────────
-    const outDir = path.join(__dirname, 'dashboard');
-    mkdirSync(outDir, { recursive: true });
-    writeFileSync(path.join(outDir, 'index.html'), html, 'utf8');
-    // Prevent GitHub Pages from running Jekyll
-    writeFileSync(path.join(outDir, '.nojekyll'), '', 'utf8');
-
-    console.log(`✅  Dashboard written → dashboard/index.html`);
-    console.log(`    Spend: $${spend.toFixed(2)} | Leads: ${leads} | CPL: $${cpl.toFixed(2)} | Period: ${displayPeriod}`);
-
-  } catch (e) {
-    console.error('❌  Error:', e.response?.data?.error?.message || e.message);
-    if (e.response?.data) console.error(JSON.stringify(e.response.data, null, 2));
-    process.exit(1);
+// ── APPLY FILTERS ──────────────────────────────────────────────────
+async function applyFilters() {
+  const since = document.getElementById('dateSince').value;
+  const until = document.getElementById('dateUntil').value;
+  if (!since || !until || since > until) {
+    alert('Invalid date range'); return;
+  }
+  const btn = document.getElementById('applyBtn');
+  const overlay = document.getElementById('overlay');
+  btn.disabled = true;
+  overlay.classList.add('show');
+  try {
+    const data = await fetchData(since, until);
+    render(data, since, until);
+  } catch(e) {
+    alert('Error fetching data: ' + e.message);
+    console.error(e);
+  } finally {
+    btn.disabled = false;
+    overlay.classList.remove('show');
   }
 }
 
-main();
+// ── INIT ───────────────────────────────────────────────────────────
+buildCampMenu();
+initCharts();
+applyFilters(); // load with default dates on page open
+<\/script>
+</body>
+</html>`;
+}
+
+main().catch(e => { console.error('❌', e.response?.data?.error?.message||e.message); process.exit(1); });

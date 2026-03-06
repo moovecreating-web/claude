@@ -173,7 +173,7 @@ tbody tr:hover td{background:#252445}
       </div>
     </div>
   </div>
-  <div class="upd" id="updLabel">Built: 06/03/2026 15:36:21</div>
+  <div class="upd" id="updLabel">Built: 06/03/2026 15:52:31</div>
 </div>
 
 <!-- MAIN -->
@@ -268,12 +268,12 @@ const fmtN = v => Number(v).toLocaleString('en-US');
 const fmt$ = v => '$' + (v>=10000?(v/1000).toFixed(1)+'k':v.toFixed(2));
 
 function deltaHtml(cur, prev, higherIsBetter) {
-  const diff = cur - prev;
-  const up   = diff >= 0;
-  const cls  = (up === higherIsBetter) ? 'pos' : 'neg';
-  const arr  = up ? '▲' : '▼';
-  const abs  = Math.abs(diff);
-  return `<span class="${cls}">${arr} ${typeof cur==='number'&&cur%1!==0?abs.toFixed(2):abs} vs prev</span>`;
+  if (!prev) return '<span style="color:#555570">no prev data</span>';
+  const pct = ((cur - prev) / prev * 100);
+  const up  = pct >= 0;
+  const cls = (up === higherIsBetter) ? 'pos' : 'neg';
+  const arr = up ? '▲' : '▼';
+  return `<span class="${cls}">${arr} ${Math.abs(pct).toFixed(1)}% vs prev</span>`;
 }
 
 async function api(path, params={}) {

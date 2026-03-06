@@ -324,13 +324,23 @@ const ga = (actions, type) =>
 const fmtN = v => Number(v).toLocaleString('en-US');
 const fmt$ = v => '$' + (v>=10000?(v/1000).toFixed(1)+'k':v.toFixed(2));
 
-function deltaHtml(cur, prev, higherIsBetter) {
-  if (!prev) return '<span style="color:#555570">no prev data</span>';
-  const pct = ((cur - prev) / prev * 100);
-  const up  = pct >= 0;
+function fmtDateRange(s, u) {
+  const sd = new Date(s+'T12:00:00Z'), ud = new Date(u+'T12:00:00Z');
+  const mo = {month:'short', day:'numeric'};
+  const label = sd.getMonth()===ud.getMonth()
+    ? sd.toLocaleDateString('en-US',mo).replace(',','') + '–' + ud.getDate()
+    : sd.toLocaleDateString('en-US',mo) + '–' + ud.toLocaleDateString('en-US',mo);
+  return label;
+}
+
+function deltaHtml(cur, prev, prevSince, prevUntil, higherIsBetter, fmtFn) {
+  if (!prev && prev !== 0) return '<span style="color:#555570">no prev data</span>';
+  const up  = cur >= prev;
   const cls = (up === higherIsBetter) ? 'pos' : 'neg';
   const arr = up ? '▲' : '▼';
-  return \`<span class="\${cls}">\${arr} \${Math.abs(pct).toFixed(1)}% vs prev</span>\`;
+  const dateLabel = fmtDateRange(prevSince, prevUntil);
+  const valLabel  = fmtFn ? fmtFn(prev) : prev;
+  return \`<span class="\${cls}">\${arr} \${valLabel}</span> <span style="color:#555570;font-size:10px">(\${dateLabel})</span>\`;
 }
 
 async function api(path, params={}) {
@@ -407,12 +417,17 @@ async function fetchData(since, until) {
     api(insPath, {...pvP,   fields:'spend,actions'}),
   ]);
 
-  return { ov: ov[0]||{}, daily: Array.isArray(daily)?daily:[], plat: Array.isArray(plat)?plat:[], byAd: Array.isArray(byAd)?byAd:[], prev: prev[0]||{} };
+  return {
+    ov: ov[0]||{}, daily: Array.isArray(daily)?daily:[], plat: Array.isArray(plat)?plat:[],
+    byAd: Array.isArray(byAd)?byAd:[], prev: prev[0]||{},
+    prevSince: prevSince.toISOString().split('T')[0],
+    prevUntil: prevUntil.toISOString().split('T')[0]
+  };
 }
 
 // ── RENDER ─────────────────────────────────────────────────────────
 function render(data, since, until) {
-  const { ov, daily, plat, byAd, prev } = data;
+  const { ov, daily, plat, byAd, prev, prevSince, prevUntil } = data;
 
   const spend       = parseFloat(ov.spend||0);
   const impressions = parseInt(ov.impressions||0);
@@ -438,9 +453,9 @@ function render(data, since, until) {
   document.getElementById('kSpend').textContent  = fmt$(spend);
   document.getElementById('kLeads').textContent  = leads;
   document.getElementById('kCpl').textContent    = fmt$(cpl);
-  document.getElementById('kSpendD').innerHTML   = deltaHtml(spend, pvSpend, false);
-  document.getElementById('kLeadsD').innerHTML   = deltaHtml(leads, pvLeads, true);
-  document.getElementById('kCplD').innerHTML     = deltaHtml(cpl,   pvCpl,   false);
+  document.getElementById('kSpendD').innerHTML   = deltaHtml(spend, pvSpend, prevSince, prevUntil, false, v=>'$'+v.toFixed(2));
+  document.getElementById('kLeadsD').innerHTML   = deltaHtml(leads, pvLeads, prevSince, prevUntil, true,  v=>v+' leads');
+  document.getElementById('kCplD').innerHTML     = deltaHtml(cpl,   pvCpl,   prevSince, prevUntil, false, v=>'$'+v.toFixed(2));
 
   // Sidebar metrics
   document.getElementById('mImpressions').textContent = fmtN(impressions);

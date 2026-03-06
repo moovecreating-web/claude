@@ -1,0 +1,30 @@
+{
+  "name": "facebook-ads-manager",
+  "version": "1.0.0",
+  "description": "Gerenciador de Facebook Ads com Meta Marketing API",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test src/**/*.test.js",
+    "dev": "node --watch src/index.js",
+    "validate": "node src/validateApi.js",
+    "campaigns": "node src/cli/campaigns.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.5",
+    "dotenv": "^16.3.1",
+    "chalk": "^5.3.0",
+    "table": "^6.8.1"
+  },
+  "devDependencies": {
+    "node-fetch": "^3.3.2"
+  },
+  "keywords": [
+    "facebook-ads",
+    "meta-marketing-api",
+    "campaign-management"
+  ],
+  "author": "Higor Dantas",
+  "license": "MIT"
+}

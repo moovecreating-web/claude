@@ -504,7 +504,7 @@ function render(data, since, until) {
     adMap[name].spend       += parseFloat(row.spend||0);
     adMap[name].impressions += parseInt(row.impressions||0);
   }
-  const rows = Object.entries(adMap).sort((a,b)=>b[1].leads-a[1].leads||b[1].spend-a[1].spend).slice(0,8);
+  const rows = Object.entries(adMap).sort((a,b)=>b[1].leads-a[1].leads||b[1].spend-a[1].spend).slice(0,10);
   document.getElementById('adTableBody').innerHTML = rows.map(([name,m])=>{
     const adCpl = m.leads>0 ? '$'+(m.spend/m.leads).toFixed(2) : '–';
     const adCtr = m.impressions>0 ? (m.clicks/m.impressions*100).toFixed(2)+'%' : '–';

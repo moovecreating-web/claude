@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard – Attorney Isabela | Feb 24 – Mar 6, 2026</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',Arial,sans-serif; background:#011e26; color:#f9f8f3; min-height:100vh; }
+
+  /* ── HEADER ── */
+  .header {
+    display:flex; align-items:center; gap:20px;
+    padding:10px 24px; background:#013237;
+    border-bottom:2px solid #bb764d;
+    flex-wrap:wrap;
+  }
+  .logo-wrap { flex-shrink:0; height:48px; display:flex; align-items:center; }
+  .logo-wrap img { height:48px; width:auto; display:block; border-radius:4px; }
+
+  .header-divider { width:1px; height:44px; background:#025060; flex-shrink:0; }
+
+  .filters { display:flex; gap:10px; flex-wrap:wrap; }
+  .filter-btn {
+    background:rgba(187,118,77,0.1);
+    border:1px solid rgba(187,118,77,0.35);
+    color:#d49a72; padding:7px 14px; border-radius:6px;
+    font-size:13px; cursor:pointer;
+    display:flex; align-items:center; gap:6px; letter-spacing:.3px;
+  }
+  .filter-btn::after { content:'▾'; font-size:10px; opacity:.7; }
+
+  .kpi-cards { display:flex; gap:12px; margin-left:auto; flex-wrap:wrap; }
+  .kpi-card {
+    background:#012530; border-radius:12px;
+    padding:12px 20px; display:flex; align-items:center; gap:14px;
+    min-width:185px; border:1px solid #024a56;
+  }
+  .kpi-icon {
+    width:48px; height:48px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:22px; flex-shrink:0;
+  }
+  .kpi-icon.bronze { background:radial-gradient(circle,#d4895a,#9a5830); }
+  .kpi-icon.teal   { background:radial-gradient(circle,#2a8a92,#014a55); }
+  .kpi-icon.light  { background:radial-gradient(circle,#4a9aa2,#024a55); }
+  .kpi-info { display:flex; flex-direction:column; }
+  .kpi-label { font-size:10px; color:#6d9ea3; text-transform:uppercase; letter-spacing:.7px; }
+  .kpi-value { font-size:26px; font-weight:700; color:#f9f8f3; line-height:1.15; }
+  .kpi-change { font-size:11px; margin-top:2px; }
+  .kpi-change.pos { color:#5ec87a; }
+  .kpi-change.neg { color:#d96a5a; }
+
+  /* ── MAIN GRID ── */
+  .main { display:grid; grid-template-columns:160px 1fr 340px; gap:12px; padding:14px 20px; }
+
+  /* ── LEFT SIDEBAR ── */
+  .sidebar { display:flex; flex-direction:column; gap:10px; }
+  .donut-card { background:#013237; border-radius:12px; padding:14px; border:1px solid #024a56; }
+  .donut-card canvas { width:100% !important; max-height:100px; }
+  .donut-legend { display:flex; flex-direction:column; gap:5px; margin-top:8px; font-size:11px; }
+  .legend-item { display:flex; align-items:center; gap:6px; }
+  .legend-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+
+  .metric-card { background:#013237; border-radius:12px; padding:12px 14px; border:1px solid #024a56; }
+  .metric-label { font-size:10px; color:#6d9ea3; text-transform:uppercase; letter-spacing:.5px; margin-top:4px; }
+  .metric-value { font-size:22px; font-weight:700; color:#f9f8f3; }
+  .metric-change { font-size:11px; }
+  .metric-change.pos { color:#5ec87a; }
+  .metric-change.neg { color:#d96a5a; }
+
+  /* ── CENTER ── */
+  .center { display:flex; flex-direction:column; gap:12px; min-width:0; }
+  .chart-card { background:#013237; border-radius:12px; padding:16px; border:1px solid #024a56; }
+  .chart-card h3 { font-size:10px; color:#6d9ea3; margin-bottom:10px; text-transform:uppercase; letter-spacing:.6px; }
+
+  .gauges-row { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .gauge-card {
+    background:#013237; border-radius:12px; padding:12px 10px;
+    display:flex; flex-direction:column; align-items:center;
+    border:1px solid #024a56;
+  }
+  .gauge-label { font-size:10px; color:#6d9ea3; text-transform:uppercase; letter-spacing:.4px; margin-bottom:6px; }
+  .gauge-value { font-size:18px; font-weight:700; color:#f9f8f3; margin-top:-10px; }
+  .gauge-change { font-size:10px; margin-top:2px; }
+  .gauge-change.pos { color:#5ec87a; }
+  .gauge-change.neg { color:#d96a5a; }
+  .gauge-range { display:flex; justify-content:space-between; width:100%; font-size:10px; color:#3a6a70; margin-top:2px; padding:0 4px; }
+  .gauge-wrapper { width:100%; max-height:65px; }
+
+  /* ── RIGHT PANEL ── */
+  .right-panel { display:flex; flex-direction:column; gap:12px; }
+  .funnel-card { background:#013237; border-radius:12px; padding:16px; border:1px solid #024a56; }
+  .funnel-title { font-size:10px; color:#6d9ea3; text-transform:uppercase; letter-spacing:.6px; margin-bottom:12px; }
+  .funnel-rows { display:flex; flex-direction:column; gap:0; }
+  .funnel-row { display:flex; align-items:center; justify-content:space-between; }
+  .funnel-label { font-size:13px; color:#a0c0c4; width:60px; }
+  .funnel-bar-wrap { flex:1; position:relative; height:30px; margin:2px 8px; }
+  .funnel-bar { position:absolute; left:50%; transform:translateX(-50%); height:100%; border-radius:4px; }
+  .funnel-value { font-size:15px; font-weight:700; color:#f9f8f3; width:70px; text-align:right; }
+  .funnel-connector { height:6px; }
+
+  /* Creative table */
+  .table-card { background:#013237; border-radius:12px; padding:14px; border:1px solid #024a56; }
+  .table-card h3 { font-size:10px; color:#6d9ea3; text-transform:uppercase; letter-spacing:.6px; margin-bottom:10px; }
+  table { width:100%; border-collapse:collapse; font-size:12px; }
+  th { color:#6d9ea3; font-weight:500; padding:5px 6px; text-align:right; border-bottom:1px solid #024a56; }
+  th:first-child { text-align:left; }
+  td { padding:5px 6px; text-align:right; color:#a0c0c4; border-bottom:1px solid #012530; }
+  td:first-child { text-align:left; color:#e8f0f1; max-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  tr:last-child td { color:#f9f8f3; font-weight:700; border-top:1px solid #024a56; border-bottom:none; }
+  tbody tr:hover td { background:#01424d; }
+
+  /* Bronze accent bar at left of metric cards */
+  .metric-card { border-left:3px solid #bb764d; }
+</style>
+</head>
+<body>
+
+<!-- ══ HEADER ══ -->
+<div class="header">
+  <div class="logo-wrap">
+    <img src="logo Altum Law.JPG" alt="Altum Law">
+  </div>
+  <div class="header-divider"></div>
+  <div class="filters">
+    <div class="filter-btn">Feb 24, 2026 – Mar 6, 2026</div>
+    <div class="filter-btn">Campaign Name</div>
+    <div class="filter-btn">Ad Name</div>
+  </div>
+  <div class="kpi-cards">
+    <div class="kpi-card">
+      <div class="kpi-icon bronze">💰</div>
+      <div class="kpi-info">
+        <span class="kpi-label">Amount Spent</span>
+        <span class="kpi-value">$346</span>
+        <span class="kpi-change neg">▼ $65.01 vs prev period</span>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon teal">🚀</div>
+      <div class="kpi-info">
+        <span class="kpi-label">Leads</span>
+        <span class="kpi-value">20</span>
+        <span class="kpi-change neg">▼ 31 vs prev period</span>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon light">👥</div>
+      <div class="kpi-info">
+        <span class="kpi-label">Cost per Lead</span>
+        <span class="kpi-value">$17.30</span>
+        <span class="kpi-change pos">▲ better from $8.06</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MAIN ══ -->
+<div class="main">
+
+  <!-- LEFT SIDEBAR -->
+  <div class="sidebar">
+    <div class="donut-card">
+      <canvas id="platformChart"></canvas>
+      <div class="donut-legend">
+        <div class="legend-item">
+          <div class="legend-dot" style="background:#bb764d"></div>
+          <span style="color:#bb764d">Instagram 70.9%</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background:#2a8a92"></div>
+          <span style="color:#6d9ea3">Facebook 29.1%</span>
+        </div>
+      </div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value">14,198</div>
+      <div class="metric-change neg">▼ 1,920</div>
+      <div class="metric-label">Impressions</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value">190</div>
+      <div class="metric-change neg">▼ 41.4%</div>
+      <div class="metric-label">Clicks</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value">10.53%</div>
+      <div class="metric-change neg">▼ 5.21%</div>
+      <div class="metric-label">Conversion Rate</div>
+    </div>
+  </div>
+
+  <!-- CENTER -->
+  <div class="center">
+    <div class="chart-card">
+      <h3>Amount Spent &nbsp;—&nbsp; Link Clicks</h3>
+      <canvas id="dailyChart" height="120"></canvas>
+    </div>
+    <div class="gauges-row">
+      <div class="gauge-card">
+        <div class="gauge-label">CPM</div>
+        <div class="gauge-wrapper"><canvas id="gaugeCPM"></canvas></div>
+        <div class="gauge-value">$24.37</div>
+        <div class="gauge-change neg">▼ 4.62</div>
+        <div class="gauge-range"><span>0</span><span>30</span></div>
+      </div>
+      <div class="gauge-card">
+        <div class="gauge-label">Invested / Clicks</div>
+        <div class="gauge-wrapper"><canvas id="gaugeCPC"></canvas></div>
+        <div class="gauge-value">$1.82</div>
+        <div class="gauge-change pos">▲ 0.94</div>
+        <div class="gauge-range"><span>0</span><span>5</span></div>
+      </div>
+      <div class="gauge-card">
+        <div class="gauge-label">Leads / Clicks</div>
+        <div class="gauge-wrapper"><canvas id="gaugeConv"></canvas></div>
+        <div class="gauge-value">10.53%</div>
+        <div class="gauge-change neg">▼ 5.21%</div>
+        <div class="gauge-range"><span>0%</span><span>20%</span></div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <h3>Clicked and Sent a Message</h3>
+      <canvas id="waChart" height="80"></canvas>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+    <div class="funnel-card">
+      <div class="funnel-title">Conversion Funnel</div>
+      <div class="funnel-rows">
+        <div class="funnel-row">
+          <div class="funnel-label">Reach</div>
+          <div class="funnel-bar-wrap">
+            <div class="funnel-bar" style="width:100%;background:linear-gradient(90deg,#024a56,#2a8a92)"></div>
+          </div>
+          <div class="funnel-value">8,553</div>
+        </div>
+        <div class="funnel-connector"></div>
+        <div class="funnel-row">
+          <div class="funnel-label">Clicks</div>
+          <div class="funnel-bar-wrap">
+            <div class="funnel-bar" style="width:70%;background:linear-gradient(90deg,#024a56,#2a8a92);opacity:.85"></div>
+          </div>
+          <div class="funnel-value">190</div>
+        </div>
+        <div class="funnel-connector"></div>
+        <div class="funnel-row">
+          <div class="funnel-label">Leads</div>
+          <div class="funnel-bar-wrap">
+            <div class="funnel-bar" style="width:40%;background:linear-gradient(90deg,#8a4a28,#bb764d)"></div>
+          </div>
+          <div class="funnel-value">20</div>
+        </div>
+        <div class="funnel-connector"></div>
+        <div class="funnel-row">
+          <div class="funnel-label">CPL</div>
+          <div class="funnel-bar-wrap">
+            <div class="funnel-bar" style="width:22%;background:linear-gradient(90deg,#6a3a1a,#9a5a35)"></div>
+          </div>
+          <div class="funnel-value">$17.30</div>
+        </div>
+      </div>
+    </div>
+    <div class="table-card">
+      <h3>Performance by Creative</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Creative</th>
+            <th>Clicks</th>
+            <th>Leads</th>
+            <th>CPL</th>
+            <th>CTR</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>02 - AJUSTE DE STA...</td><td>74</td><td>8</td><td>17.44</td><td>1.35%</td></tr>
+          <tr><td>00 - DIVORCE</td><td>30</td><td>8</td><td>8.20</td><td>1.05%</td></tr>
+          <tr><td>[ASIANS CRIATIVE]</td><td>59</td><td>2</td><td>20.98</td><td>2.82%</td></tr>
+          <tr><td>03 - EB3 - PT</td><td>15</td><td>1</td><td>47.69</td><td>1.01%</td></tr>
+          <tr><td>00 - VISA URGENCY</td><td>12</td><td>1</td><td>47.25</td><td>0.59%</td></tr>
+          <tr><td>01 - I140 APPROVED</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+        </tbody>
+        <tfoot>
+          <tr><td>Grand total</td><td>190</td><td>20</td><td>17.30</td><td>1.34%</td></tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+</div><!-- end main -->
+
+<script>
+// ── PLATFORM DONUT ──
+new Chart(document.getElementById('platformChart'), {
+  type: 'doughnut',
+  data: {
+    datasets: [{
+      data: [70.9, 29.1],
+      backgroundColor: ['#bb764d','#2a8a92'],
+      borderWidth: 0,
+      hoverOffset: 4
+    }]
+  },
+  options: {
+    cutout: '65%',
+    plugins: {
+      legend: { display:false },
+      tooltip: { callbacks:{ label: ctx => ctx.parsed.toFixed(1)+'%' } }
+    },
+    animation: { animateRotate: true }
+  }
+});
+
+// ── DAILY BAR + LINE ──
+const dailyLabels = ['Feb 24','Feb 25','Feb 26','Feb 27','Feb 28','Mar 01','Mar 02','Mar 03','Mar 04','Mar 05','Mar 06'];
+const dailySpend  = [34.57, 37.1, 37.44, 36.79, 30, 29.43, 43.61, 40.6, 28.46, 24.01, 4.26];
+const dailyClicks = [12, 2, 9, 4, 11, 19, 8, 6, 8, 5, 0];
+
+new Chart(document.getElementById('dailyChart'), {
+  data: {
+    labels: dailyLabels,
+    datasets: [
+      {
+        type: 'bar',
+        label: 'Amount Spent ($)',
+        data: dailySpend,
+        backgroundColor: 'rgba(187,118,77,0.80)',
+        borderRadius: 4,
+        yAxisID: 'y'
+      },
+      {
+        type: 'line',
+        label: 'Link Clicks',
+        data: dailyClicks,
+        borderColor: '#f9f8f3',
+        backgroundColor: 'rgba(249,248,243,0.06)',
+        pointBackgroundColor: '#f9f8f3',
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        tension: 0.3,
+        yAxisID: 'y2'
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    interaction: { mode:'index', intersect:false },
+    plugins: { legend:{ labels:{ color:'#6d9ea3', boxWidth:12, font:{size:11} } } },
+    scales: {
+      x:  { ticks:{ color:'#6d9ea3', font:{size:10} }, grid:{ color:'rgba(255,255,255,0.04)' } },
+      y:  { ticks:{ color:'#6d9ea3', font:{size:10} }, grid:{ color:'rgba(255,255,255,0.04)' }, position:'left' },
+      y2: { ticks:{ color:'#a0c0c4', font:{size:10} }, grid:{ display:false }, position:'right' }
+    }
+  }
+});
+
+// ── GAUGES ──
+function makeGauge(id, value, max, color) {
+  const pct = Math.min(value / max, 1);
+  new Chart(document.getElementById(id), {
+    type: 'doughnut',
+    data: {
+      datasets: [{
+        data: [pct, 1 - pct],
+        backgroundColor: [color, '#012530'],
+        borderWidth: 0,
+        circumference: 180,
+        rotation: 270
+      }]
+    },
+    options: {
+      cutout: '72%',
+      plugins: { legend:{ display:false }, tooltip:{ enabled:false } },
+      animation: { animateRotate: true }
+    }
+  });
+}
+
+makeGauge('gaugeCPM',  24.37, 30, '#bb764d');
+makeGauge('gaugeCPC',   1.82,  5, '#bb764d');
+makeGauge('gaugeConv', 10.53, 20, '#bb764d');
+
+// ── WA CHART ──
+const waData = [1, 1, 3, 3, 0, 5, 1, 1, 4, 1, 0];
+new Chart(document.getElementById('waChart'), {
+  type: 'line',
+  data: {
+    labels: dailyLabels,
+    datasets: [{
+      label: 'Clicked and Sent a Message',
+      data: waData,
+      borderColor: '#bb764d',
+      backgroundColor: 'rgba(187,118,77,0.15)',
+      fill: true,
+      tension: 0.4,
+      pointRadius: 4,
+      pointBackgroundColor: '#bb764d'
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend:{ display:false } },
+    scales: {
+      x: { ticks:{ color:'#6d9ea3', font:{size:10} }, grid:{ color:'rgba(255,255,255,0.04)' } },
+      y: { ticks:{ color:'#6d9ea3', font:{size:10}, stepSize:1 }, grid:{ color:'rgba(255,255,255,0.04)' }, min:0 }
+    }
+  }
+});
+</script>
+</body>
+</html>

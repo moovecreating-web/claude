@@ -266,7 +266,7 @@ tbody tr:hover td{background:#01424d}
         <div class="glabel">CPM</div>
         <div class="gwrap"><canvas id="gCPM"></canvas></div>
         <div class="gval" id="gvCPM">–</div>
-        <div class="grange"><span>$0</span><span>$50</span></div>
+        <div class="grange"><span>$0</span><span>$30</span></div>
       </div>
       <div class="gauge">
         <div class="glabel">Invested / CTA Click</div>
@@ -275,7 +275,7 @@ tbody tr:hover td{background:#01424d}
         <div class="grange"><span>$0</span><span>$10</span></div>
       </div>
       <div class="gauge">
-        <div class="glabel">Leads / Clicks</div>
+        <div class="glabel">Leads / CTA Clicks</div>
         <div class="gwrap"><canvas id="gConv"></canvas></div>
         <div class="gval" id="gvConv">–</div>
         <div class="grange"><span>0%</span><span>25%</span></div>
@@ -495,7 +495,7 @@ function render(data, since, until) {
   });
 
   // Gauges
-  setGauge('gCPM',  cpm,      50,  'gvCPM',  '$'+cpm.toFixed(2));
+  setGauge('gCPM',  cpm,      30,  'gvCPM',  '$'+cpm.toFixed(2));
   setGauge('gCPC',  costPerCTA, 10, 'gvCPC',  '$'+costPerCTA.toFixed(2));
   setGauge('gConv', convRate, 25,  'gvConv', convRate.toFixed(2)+'%');
 

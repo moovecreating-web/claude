@@ -136,10 +136,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.6)}
 .gauges{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .gauge{background:#013237;border-radius:12px;padding:12px 10px;display:flex;flex-direction:column;align-items:center;border:1px solid #024a56}
 .glabel{font-size:10px;color:#6d9ea3;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
-.gwrap{width:100%;position:relative;overflow:hidden;padding-bottom:50%;height:0}
-.gwrap canvas{position:absolute;top:0;left:0;width:100%!important;height:200%!important}
-.grange{display:flex;justify-content:space-between;align-items:center;width:100%;padding:4px 4px 0;font-size:10px;color:#3a6a70}
-.gval{font-size:17px;font-weight:700;color:#f9f8f3}
+.gwrap{width:100%}
 
 .rp{display:flex;flex-direction:column;gap:12px}
 .funnel{background:#013237;border-radius:12px;padding:16px;border:1px solid #024a56}
@@ -266,17 +263,14 @@ tbody tr:hover td{background:#01424d}
       <div class="gauge">
         <div class="glabel">CPM</div>
         <div class="gwrap"><canvas id="gCPM"></canvas></div>
-        <div class="grange"><span>$0</span><span class="gval" id="gvCPM">–</span><span>$30</span></div>
       </div>
       <div class="gauge">
         <div class="glabel">Invested / CTA Click</div>
         <div class="gwrap"><canvas id="gCPC"></canvas></div>
-        <div class="grange"><span>$0</span><span class="gval" id="gvCPC">–</span><span>$10</span></div>
       </div>
       <div class="gauge">
         <div class="glabel">Leads / CTA Clicks</div>
         <div class="gwrap"><canvas id="gConv"></canvas></div>
-        <div class="grange"><span>0%</span><span class="gval" id="gvConv">–</span><span>25%</span></div>
       </div>
     </div>
     <div class="cc">
@@ -548,9 +542,9 @@ function setGauge(id, value, max, labelId, text) {
   const pct = Math.min(value/max, 1);
   if (charts[id]) {
     charts[id].data.datasets[0].data = [pct, 1-pct];
+    charts[id].options.plugins.gauge.val = text;
     charts[id].update();
   }
-  document.getElementById(labelId).textContent = text;
 }
 
 function initCharts() {
@@ -572,11 +566,40 @@ function initCharts() {
               y2:{ticks:{color:'#a0bfc2',font:{size:10}},grid:{display:false},position:'right'}}}
   });
 
-  ['gCPM','gCPC','gConv'].forEach(id=>{
+  const gaugePlugin = {
+    id:'gauge',
+    afterDraw(chart) {
+      const p = chart.options.plugins.gauge;
+      if (!p) return;
+      const meta = chart.getDatasetMeta(0);
+      if (!meta || !meta.data[0]) return;
+      const arc = meta.data[0];
+      const {ctx} = chart;
+      const cx = arc.x, cy = arc.y, ro = arc.outerRadius;
+      ctx.save();
+      // Value centered at arc mouth
+      ctx.font = 'bold 15px Segoe UI,Arial,sans-serif';
+      ctx.fillStyle = '#f9f8f3';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText(p.val||'–', cx, cy+4);
+      // Min label at left endpoint
+      ctx.font = '9px Segoe UI,Arial,sans-serif';
+      ctx.fillStyle = '#4a7a80';
+      ctx.textAlign = 'left';
+      ctx.fillText(p.min||'', cx-ro+2, cy+4);
+      // Max label at right endpoint
+      ctx.textAlign = 'right';
+      ctx.fillText(p.max||'', cx+ro-2, cy+4);
+      ctx.restore();
+    }
+  };
+  [{id:'gCPM',min:'$0',max:'$30'},{id:'gCPC',min:'$0',max:'$10'},{id:'gConv',min:'0%',max:'25%'}].forEach(({id,min,max})=>{
     charts[id] = new Chart(document.getElementById(id),{
       type:'doughnut',
+      plugins:[gaugePlugin],
       data:{datasets:[{data:[0.5,0.5],backgroundColor:['#bb764d','#012530'],borderWidth:0,circumference:180,rotation:270}]},
-      options:{cutout:'58%',layout:{padding:0},plugins:{legend:{display:false},tooltip:{enabled:false}}}
+      options:{aspectRatio:2,cutout:'60%',layout:{padding:2},plugins:{legend:{display:false},tooltip:{enabled:false},gauge:{val:'–',min,max}}}
     });
   });
 

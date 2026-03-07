@@ -251,7 +251,7 @@ tbody tr:hover td{background:#01424d}
       </div>
     </div>
     <div class="mcard"><div class="mval" id="mImpressions">–</div><div class="mlabel">Impressions</div></div>
-    <div class="mcard"><div class="mval" id="mClicks">–</div><div class="mlabel">Clicks</div></div>
+    <div class="mcard"><div class="mval" id="mClicks">–</div><div class="mlabel">Link Clicks (CTA)</div></div>
     <div class="mcard"><div class="mval" id="mConvRate">–</div><div class="mlabel">Conversion Rate</div></div>
   </div>
 
@@ -464,7 +464,7 @@ function render(data, since, until) {
 
   // Sidebar metrics
   document.getElementById('mImpressions').textContent = fmtN(impressions);
-  document.getElementById('mClicks').textContent      = fmtN(clicks);
+  document.getElementById('mClicks').textContent      = fmtN(linkClicks);
   document.getElementById('mConvRate').textContent    = convRate.toFixed(2)+'%';
 
   // Platform donut

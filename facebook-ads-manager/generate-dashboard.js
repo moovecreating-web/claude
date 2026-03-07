@@ -136,7 +136,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.6)}
 .gauges{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .gauge{background:#013237;border-radius:12px;padding:12px 10px;display:flex;flex-direction:column;align-items:center;border:1px solid #024a56}
 .glabel{font-size:10px;color:#6d9ea3;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
-.gwrap{width:100%}
+.gwrap{width:100%;height:80px}
 
 .rp{display:flex;flex-direction:column;gap:12px}
 .funnel{background:#013237;border-radius:12px;padding:16px;border:1px solid #024a56}
@@ -542,7 +542,7 @@ function setGauge(id, value, max, labelId, text) {
   const pct = Math.min(value/max, 1);
   if (charts[id]) {
     charts[id].data.datasets[0].data = [pct, 1-pct];
-    charts[id].options.plugins.gauge.val = text;
+    charts[id]._gauge.val = text;
     charts[id].update();
   }
 }
@@ -569,7 +569,7 @@ function initCharts() {
   const gaugePlugin = {
     id:'gauge',
     afterDraw(chart) {
-      const p = chart.options.plugins.gauge;
+      const p = chart._gauge;
       if (!p) return;
       const meta = chart.getDatasetMeta(0);
       if (!meta || !meta.data[0]) return;
@@ -577,30 +577,29 @@ function initCharts() {
       const {ctx} = chart;
       const cx = arc.x, cy = arc.y, ro = arc.outerRadius;
       ctx.save();
-      // Value centered at arc mouth
-      ctx.font = 'bold 15px Segoe UI,Arial,sans-serif';
+      ctx.font = 'bold 14px Segoe UI,Arial,sans-serif';
       ctx.fillStyle = '#f9f8f3';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
       ctx.fillText(p.val||'–', cx, cy+4);
-      // Min label at left endpoint
       ctx.font = '9px Segoe UI,Arial,sans-serif';
       ctx.fillStyle = '#4a7a80';
       ctx.textAlign = 'left';
       ctx.fillText(p.min||'', cx-ro+2, cy+4);
-      // Max label at right endpoint
       ctx.textAlign = 'right';
       ctx.fillText(p.max||'', cx+ro-2, cy+4);
       ctx.restore();
     }
   };
   [{id:'gCPM',min:'$0',max:'$30'},{id:'gCPC',min:'$0',max:'$10'},{id:'gConv',min:'0%',max:'25%'}].forEach(({id,min,max})=>{
-    charts[id] = new Chart(document.getElementById(id),{
+    const c = new Chart(document.getElementById(id),{
       type:'doughnut',
       plugins:[gaugePlugin],
       data:{datasets:[{data:[0.5,0.5],backgroundColor:['#bb764d','#012530'],borderWidth:0,circumference:180,rotation:270}]},
-      options:{aspectRatio:2,cutout:'60%',layout:{padding:2},plugins:{legend:{display:false},tooltip:{enabled:false},gauge:{val:'–',min,max}}}
+      options:{maintainAspectRatio:false,cutout:'60%',layout:{padding:2},plugins:{legend:{display:false},tooltip:{enabled:false}}}
     });
+    c._gauge = {val:'–', min, max};
+    charts[id] = c;
   });
 
   charts['waChart'] = new Chart(document.getElementById('waChart'),{

@@ -136,9 +136,10 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.6)}
 .gauges{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .gauge{background:#013237;border-radius:12px;padding:12px 10px;display:flex;flex-direction:column;align-items:center;border:1px solid #024a56}
 .glabel{font-size:10px;color:#6d9ea3;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
-.gval{font-size:18px;font-weight:700;color:#f9f8f3;margin-top:-10px}
-.grange{display:flex;justify-content:space-between;width:100%;font-size:10px;color:#3a6a70;margin-top:2px;padding:0 4px}
-.gwrap{width:100%;max-height:65px}
+.gwrap{width:100%;position:relative;overflow:hidden;padding-bottom:50%;height:0}
+.gwrap canvas{position:absolute;top:0;left:0;width:100%!important;height:200%!important}
+.grange{display:flex;justify-content:space-between;align-items:center;width:100%;padding:4px 4px 0;font-size:10px;color:#3a6a70}
+.gval{font-size:17px;font-weight:700;color:#f9f8f3}
 
 .rp{display:flex;flex-direction:column;gap:12px}
 .funnel{background:#013237;border-radius:12px;padding:16px;border:1px solid #024a56}
@@ -265,20 +266,17 @@ tbody tr:hover td{background:#01424d}
       <div class="gauge">
         <div class="glabel">CPM</div>
         <div class="gwrap"><canvas id="gCPM"></canvas></div>
-        <div class="gval" id="gvCPM">–</div>
-        <div class="grange"><span>$0</span><span>$30</span></div>
+        <div class="grange"><span>$0</span><span class="gval" id="gvCPM">–</span><span>$30</span></div>
       </div>
       <div class="gauge">
         <div class="glabel">Invested / CTA Click</div>
         <div class="gwrap"><canvas id="gCPC"></canvas></div>
-        <div class="gval" id="gvCPC">–</div>
-        <div class="grange"><span>$0</span><span>$10</span></div>
+        <div class="grange"><span>$0</span><span class="gval" id="gvCPC">–</span><span>$10</span></div>
       </div>
       <div class="gauge">
         <div class="glabel">Leads / CTA Clicks</div>
         <div class="gwrap"><canvas id="gConv"></canvas></div>
-        <div class="gval" id="gvConv">–</div>
-        <div class="grange"><span>0%</span><span>25%</span></div>
+        <div class="grange"><span>0%</span><span class="gval" id="gvConv">–</span><span>25%</span></div>
       </div>
     </div>
     <div class="cc">
@@ -578,7 +576,7 @@ function initCharts() {
     charts[id] = new Chart(document.getElementById(id),{
       type:'doughnut',
       data:{datasets:[{data:[0.5,0.5],backgroundColor:['#bb764d','#012530'],borderWidth:0,circumference:180,rotation:270}]},
-      options:{cutout:'72%',plugins:{legend:{display:false},tooltip:{enabled:false}}}
+      options:{cutout:'58%',layout:{padding:0},plugins:{legend:{display:false},tooltip:{enabled:false}}}
     });
   });
 

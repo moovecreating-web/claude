@@ -12,12 +12,15 @@ permissions:
   pages: write
   id-token: write
 
+# Workflow-level concurrency: when a new run starts, cancels ALL jobs
+# (build AND deploy) from any previous run in this workflow.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
-    concurrency:
-      group: ${{ github.workflow }}-build
-      cancel-in-progress: true
 
     steps:
       - name: Checkout repository
@@ -64,9 +67,6 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
-    concurrency:
-      group: ${{ github.workflow }}-deploy
-      cancel-in-progress: false
 
     steps:
       - name: Deploy to GitHub Pages

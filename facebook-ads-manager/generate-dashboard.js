@@ -293,7 +293,7 @@ tbody tr:hover td{background:#01424d}
       <div class="ftitle">Conversion Funnel</div>
       <div class="frow"><div class="flabel">Reach</div><div class="fbwrap"><div class="fb" id="fReachBar" style="width:100%;background:linear-gradient(90deg,#024a56,#2a8a92)"></div></div><div class="fval" id="fReach">–</div></div>
       <div class="fconn"></div>
-      <div class="frow"><div class="flabel">Clicks</div><div class="fbwrap"><div class="fb" id="fClicksBar" style="background:linear-gradient(90deg,#024a56,#2a8a92);opacity:.85"></div></div><div class="fval" id="fClicks">–</div></div>
+      <div class="frow"><div class="flabel">CTA Clicks</div><div class="fbwrap"><div class="fb" id="fClicksBar" style="background:linear-gradient(90deg,#024a56,#2a8a92);opacity:.85"></div></div><div class="fval" id="fClicks">–</div></div>
       <div class="fconn"></div>
       <div class="frow"><div class="flabel">Leads</div><div class="fbwrap"><div class="fb" id="fLeadsBar" style="background:linear-gradient(90deg,#8a4a28,#bb764d)"></div></div><div class="fval" id="fLeads">–</div></div>
       <div class="fconn"></div>
@@ -302,7 +302,7 @@ tbody tr:hover td{background:#01424d}
     <div class="tcard">
       <h3>Performance by Creative</h3>
       <table>
-        <thead><tr><th>Creative</th><th>Clicks</th><th>Leads</th><th>CPL</th><th>CTR</th></tr></thead>
+        <thead><tr><th>Creative</th><th>All Clicks</th><th>Leads</th><th>CPL</th><th>CTR</th></tr></thead>
         <tbody id="adTableBody"></tbody>
         <tfoot><tr><td>Total</td><td id="ftClicks">–</td><td id="ftLeads">–</td><td id="ftCpl">–</td><td id="ftCtr">–</td></tr></tfoot>
       </table>
@@ -507,12 +507,17 @@ function render(data, since, until) {
 
   // Funnel
   document.getElementById('fReach').textContent  = fmtN(reach);
-  document.getElementById('fClicks').textContent = fmtN(clicks);
+  document.getElementById('fClicks').textContent = fmtN(linkClicks);
   document.getElementById('fLeads').textContent  = leads;
   document.getElementById('fCpl').textContent    = fmt$(cpl);
-  document.getElementById('fClicksBar').style.width = Math.min(reach>0?clicks/reach*100*3:0,95)+'%';
-  document.getElementById('fLeadsBar').style.width  = Math.min(reach>0?leads/reach*100*30:0,90)+'%';
-  document.getElementById('fCplBar').style.width    = Math.min(cpl/50*100,85)+'%';
+  // Funnel bars — log scale garante cascata visual mesmo com ratios muito diferentes
+  const _fw = (v, ref) => ref > 0 ? Math.max(Math.min(Math.log(v+1)/Math.log(ref+1)*90, 90), 6) : 6;
+  const _cW = Math.min(_fw(linkClicks, reach), 88);
+  const _lW = Math.min(_fw(leads, reach), _cW - 6);
+  const _dW = Math.max(_lW - 14, 4);
+  document.getElementById('fClicksBar').style.width = _cW + '%';
+  document.getElementById('fLeadsBar').style.width  = _lW + '%';
+  document.getElementById('fCplBar').style.width    = _dW + '%';
 
   // Ad table
   const adMap = {};

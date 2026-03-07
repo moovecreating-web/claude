@@ -64,105 +64,107 @@ return `<!DOCTYPE html>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"><\/script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Segoe UI',Arial,sans-serif;background:#151424;color:#e0e0f0;min-height:100vh}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#011e26;color:#f9f8f3;min-height:100vh}
 
 /* ── HEADER ── */
-.header{display:flex;align-items:center;gap:10px;padding:12px 18px;background:#1c1b30;border-bottom:1px solid #2e2d4a;flex-wrap:wrap}
-.logo{width:40px;height:40px;background:linear-gradient(135deg,#b8860b,#d4a017);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:bold;color:#fff;font-style:italic;flex-shrink:0}
-.hinfo .htitle{font-size:13px;font-weight:600}
-.hinfo .hsub{font-size:10px;color:#7070a0}
+.header{display:flex;align-items:center;gap:14px;padding:10px 22px;background:#013237;border-bottom:2px solid #bb764d;flex-wrap:wrap}
+.logo-wrap{flex-shrink:0;height:46px;display:flex;align-items:center}
+.logo-wrap img{height:46px;width:auto;display:block;border-radius:3px}
+.hdiv{width:1px;height:40px;background:#024a56;flex-shrink:0}
+.hinfo .htitle{font-size:13px;font-weight:600;color:#f9f8f3}
+.hinfo .hsub{font-size:10px;color:#6d9ea3}
 
 /* filters bar */
 .filters{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:4px}
-.filters label{font-size:11px;color:#7070a0}
-input[type=date]{background:#2a2945;border:1px solid #3d3c5a;color:#e0e0f0;padding:6px 10px;border-radius:6px;font-size:12px;cursor:pointer}
+.filters label{font-size:11px;color:#6d9ea3}
+input[type=date]{background:#012530;border:1px solid #024a56;color:#f9f8f3;padding:6px 10px;border-radius:6px;font-size:12px;cursor:pointer}
 input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.6)}
 
 /* campaign dropdown */
 .camp-wrap{position:relative}
-.camp-btn{background:#2a2945;border:1px solid #3d3c5a;color:#b0afd0;padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.camp-btn{background:#012530;border:1px solid rgba(187,118,77,0.35);color:#d4a070;padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap}
 .camp-btn::after{content:'▾';font-size:10px}
-.camp-menu{display:none;position:absolute;top:calc(100% + 4px);left:0;background:#232240;border:1px solid #3d3c5a;border-radius:8px;padding:6px;min-width:240px;max-height:280px;overflow-y:auto;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.camp-menu{display:none;position:absolute;top:calc(100% + 4px);left:0;background:#013237;border:1px solid #024a56;border-radius:8px;padding:6px;min-width:240px;max-height:280px;overflow-y:auto;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,.6)}
 .camp-menu.open{display:block}
 .camp-item{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:5px;cursor:pointer;font-size:12px}
-.camp-item:hover{background:#2e2d50}
-.camp-item input[type=checkbox]{accent-color:#4a90e2;width:14px;height:14px}
+.camp-item:hover{background:#01424d}
+.camp-item input[type=checkbox]{accent-color:#bb764d;width:14px;height:14px}
 .camp-item .cstatus{font-size:10px;padding:1px 5px;border-radius:3px;margin-left:auto}
 .cstatus.ACTIVE{background:#1a4a1a;color:#4cd97a}
 .cstatus.PAUSED{background:#3a2a1a;color:#e09060}
-.camp-actions{display:flex;gap:6px;padding:4px 8px 2px;border-top:1px solid #2e2d4a;margin-top:4px}
-.camp-actions button{flex:1;background:#2a2945;border:1px solid #3d3c5a;color:#b0afd0;padding:4px;border-radius:4px;font-size:11px;cursor:pointer}
+.camp-actions{display:flex;gap:6px;padding:4px 8px 2px;border-top:1px solid #024a56;margin-top:4px}
+.camp-actions button{flex:1;background:#012530;border:1px solid #024a56;color:#a0bfc2;padding:4px;border-radius:4px;font-size:11px;cursor:pointer}
 
 /* apply button */
-.apply-btn{background:#4a90e2;border:none;color:#fff;padding:7px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
-.apply-btn:hover{background:#357abd}
-.apply-btn:disabled{background:#2a4060;color:#6080a0;cursor:not-allowed}
+.apply-btn{background:#bb764d;border:none;color:#fff;padding:7px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.apply-btn:hover{background:#9a5830}
+.apply-btn:disabled{background:#012530;color:#4a8a90;cursor:not-allowed}
 
 /* spinner */
-.spinner{display:none;width:16px;height:16px;border:2px solid #4a90e2;border-top-color:transparent;border-radius:50%;animation:spin .6s linear infinite}
+.spinner{display:none;width:16px;height:16px;border:2px solid #bb764d;border-top-color:transparent;border-radius:50%;animation:spin .6s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* KPI cards */
 .kpis{display:flex;gap:10px;margin-left:auto;flex-wrap:wrap}
-.kpi{background:#232240;border-radius:12px;padding:12px 18px;display:flex;align-items:center;gap:12px;min-width:170px}
+.kpi{background:#012530;border-radius:12px;padding:12px 18px;display:flex;align-items:center;gap:12px;min-width:170px;border:1px solid #024a56}
 .kico{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
-.kico.gold{background:radial-gradient(circle,#f0c040,#b8860b)}
-.kico.blue{background:radial-gradient(circle,#5ab4ff,#1a5faa)}
-.kico.green{background:radial-gradient(circle,#6de88a,#1a7a38)}
-.klabel{font-size:11px;color:#8080a0;text-transform:uppercase;letter-spacing:.4px}
-.kval{font-size:24px;font-weight:700;color:#fff;line-height:1.1}
+.kico.gold{background:radial-gradient(circle,#d4895a,#9a5830)}
+.kico.blue{background:radial-gradient(circle,#2a8a92,#014a55)}
+.kico.green{background:radial-gradient(circle,#4a9aa2,#024a55)}
+.klabel{font-size:10px;color:#6d9ea3;text-transform:uppercase;letter-spacing:.5px}
+.kval{font-size:24px;font-weight:700;color:#f9f8f3;line-height:1.1}
 .kdelta{font-size:11px;margin-top:2px}
-.pos{color:#4cd97a}.neg{color:#f06060}
+.pos{color:#5ec87a}.neg{color:#d96a5a}
 
-.upd{font-size:10px;color:#555570;margin-left:auto;align-self:flex-end;padding-bottom:2px;white-space:nowrap}
+.upd{font-size:10px;color:#4a7a80;margin-left:auto;align-self:flex-end;padding-bottom:2px;white-space:nowrap}
 
 /* ── MAIN GRID ── */
 .main{display:grid;grid-template-columns:160px 1fr 340px;gap:12px;padding:12px 18px}
 .sidebar{display:flex;flex-direction:column;gap:10px}
-.donut-card{background:#1e1d35;border-radius:12px;padding:14px}
+.donut-card{background:#013237;border-radius:12px;padding:14px;border:1px solid #024a56}
 .donut-card canvas{width:100%!important;max-height:100px}
 .dleg{display:flex;flex-direction:column;gap:4px;margin-top:8px;font-size:11px}
 .dleg-item{display:flex;align-items:center;gap:6px}
 .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-.mcard{background:#1e1d35;border-radius:12px;padding:12px 14px}
-.mlabel{font-size:11px;color:#7070a0;text-transform:uppercase;letter-spacing:.4px;margin-top:4px}
-.mval{font-size:22px;font-weight:700;color:#fff}
+.mcard{background:#013237;border-radius:12px;padding:12px 14px;border:1px solid #024a56;border-left:3px solid #bb764d}
+.mlabel{font-size:10px;color:#6d9ea3;text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+.mval{font-size:22px;font-weight:700;color:#f9f8f3}
 
 .center{display:flex;flex-direction:column;gap:12px;min-width:0}
-.cc{background:#1e1d35;border-radius:12px;padding:16px}
-.cc h3{font-size:11px;color:#7070a0;margin-bottom:10px;text-transform:uppercase;letter-spacing:.4px}
+.cc{background:#013237;border-radius:12px;padding:16px;border:1px solid #024a56}
+.cc h3{font-size:10px;color:#6d9ea3;margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px}
 .gauges{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.gauge{background:#1e1d35;border-radius:12px;padding:12px 10px;display:flex;flex-direction:column;align-items:center}
-.glabel{font-size:11px;color:#7070a0;text-transform:uppercase;letter-spacing:.3px;margin-bottom:6px}
-.gval{font-size:18px;font-weight:700;color:#fff;margin-top:-10px}
-.grange{display:flex;justify-content:space-between;width:100%;font-size:10px;color:#555570;margin-top:2px;padding:0 4px}
+.gauge{background:#013237;border-radius:12px;padding:12px 10px;display:flex;flex-direction:column;align-items:center;border:1px solid #024a56}
+.glabel{font-size:10px;color:#6d9ea3;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
+.gval{font-size:18px;font-weight:700;color:#f9f8f3;margin-top:-10px}
+.grange{display:flex;justify-content:space-between;width:100%;font-size:10px;color:#3a6a70;margin-top:2px;padding:0 4px}
 .gwrap{width:100%;max-height:65px}
 
 .rp{display:flex;flex-direction:column;gap:12px}
-.funnel{background:#1e1d35;border-radius:12px;padding:16px}
-.ftitle{font-size:11px;color:#7070a0;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px}
+.funnel{background:#013237;border-radius:12px;padding:16px;border:1px solid #024a56}
+.ftitle{font-size:10px;color:#6d9ea3;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
 .frow{display:flex;align-items:center;justify-content:space-between}
-.flabel{font-size:13px;color:#a0a0c0;width:60px}
+.flabel{font-size:13px;color:#a0c0c4;width:60px}
 .fbwrap{flex:1;position:relative;height:28px;margin:2px 8px}
 .fb{position:absolute;left:50%;transform:translateX(-50%);height:100%;border-radius:4px;transition:width .5s}
-.fval{font-size:15px;font-weight:700;color:#fff;width:80px;text-align:right}
+.fval{font-size:15px;font-weight:700;color:#f9f8f3;width:80px;text-align:right}
 .fconn{height:5px}
 
-.tcard{background:#1e1d35;border-radius:12px;padding:14px}
-.tcard h3{font-size:11px;color:#7070a0;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px}
+.tcard{background:#013237;border-radius:12px;padding:14px;border:1px solid #024a56}
+.tcard h3{font-size:10px;color:#6d9ea3;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
 table{width:100%;border-collapse:collapse;font-size:12px}
-th{color:#7070a0;font-weight:500;padding:4px 6px;text-align:right;border-bottom:1px solid #2e2d4a}
+th{color:#6d9ea3;font-weight:500;padding:4px 6px;text-align:right;border-bottom:1px solid #024a56}
 th:first-child{text-align:left}
-td{padding:5px 6px;text-align:right;color:#c0c0d8;border-bottom:1px solid #1a1930}
-td:first-child{text-align:left;color:#e0e0f0;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-tfoot tr td{color:#fff;font-weight:700;border-top:1px solid #2e2d4a;border-bottom:none}
-tbody tr:hover td{background:#252445}
+td{padding:5px 6px;text-align:right;color:#a0c0c4;border-bottom:1px solid #012530}
+td:first-child{text-align:left;color:#e8f0f1;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+tfoot tr td{color:#f9f8f3;font-weight:700;border-top:1px solid #024a56;border-bottom:none}
+tbody tr:hover td{background:#01424d}
 
 /* overlay loading */
-.loading-overlay{display:none;position:fixed;inset:0;background:rgba(21,20,36,.7);z-index:200;align-items:center;justify-content:center;flex-direction:column;gap:12px}
+.loading-overlay{display:none;position:fixed;inset:0;background:rgba(1,30,38,.85);z-index:200;align-items:center;justify-content:center;flex-direction:column;gap:12px}
 .loading-overlay.show{display:flex}
-.big-spinner{width:44px;height:44px;border:4px solid #4a90e2;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite}
-.loading-overlay p{color:#b0afd0;font-size:14px}
+.big-spinner{width:44px;height:44px;border:4px solid #bb764d;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite}
+.loading-overlay p{color:#a0bfc2;font-size:14px}
 </style>
 </head>
 <body>
@@ -174,7 +176,10 @@ tbody tr:hover td{background:#252445}
 
 <!-- HEADER -->
 <div class="header">
-  <div class="logo">A</div>
+  <div class="logo-wrap">
+    <img src="logo Altum Law.JPG" alt="Altum Law">
+  </div>
+  <div class="hdiv"></div>
   <div class="hinfo">
     <div class="htitle">Attorney Isabela – Ad Performance</div>
     <div class="hsub" id="periodLabel">–</div>
@@ -241,8 +246,8 @@ tbody tr:hover td{background:#252445}
     <div class="donut-card">
       <canvas id="platformChart"></canvas>
       <div class="dleg">
-        <div class="dleg-item"><div class="dot" style="background:#f0c040"></div><span id="igLegend" style="color:#f0c040">Instagram –%</span></div>
-        <div class="dleg-item"><div class="dot" style="background:#4a90e2"></div><span id="fbLegend" style="color:#4a90e2">Facebook –%</span></div>
+        <div class="dleg-item"><div class="dot" style="background:#bb764d"></div><span id="igLegend" style="color:#bb764d">Instagram –%</span></div>
+        <div class="dleg-item"><div class="dot" style="background:#2a8a92"></div><span id="fbLegend" style="color:#6d9ea3">Facebook –%</span></div>
       </div>
     </div>
     <div class="mcard"><div class="mval" id="mImpressions">–</div><div class="mlabel">Impressions</div></div>
@@ -286,13 +291,13 @@ tbody tr:hover td{background:#252445}
   <div class="rp">
     <div class="funnel">
       <div class="ftitle">Conversion Funnel</div>
-      <div class="frow"><div class="flabel">Reach</div><div class="fbwrap"><div class="fb" id="fReachBar" style="width:100%;background:linear-gradient(90deg,#1ecfd6,#10a5aa)"></div></div><div class="fval" id="fReach">–</div></div>
+      <div class="frow"><div class="flabel">Reach</div><div class="fbwrap"><div class="fb" id="fReachBar" style="width:100%;background:linear-gradient(90deg,#024a56,#2a8a92)"></div></div><div class="fval" id="fReach">–</div></div>
       <div class="fconn"></div>
-      <div class="frow"><div class="flabel">Clicks</div><div class="fbwrap"><div class="fb" id="fClicksBar" style="background:linear-gradient(90deg,#1ecfd6,#10a5aa);opacity:.85"></div></div><div class="fval" id="fClicks">–</div></div>
+      <div class="frow"><div class="flabel">Clicks</div><div class="fbwrap"><div class="fb" id="fClicksBar" style="background:linear-gradient(90deg,#024a56,#2a8a92);opacity:.85"></div></div><div class="fval" id="fClicks">–</div></div>
       <div class="fconn"></div>
-      <div class="frow"><div class="flabel">Leads</div><div class="fbwrap"><div class="fb" id="fLeadsBar" style="background:linear-gradient(90deg,#c06020,#a04010)"></div></div><div class="fval" id="fLeads">–</div></div>
+      <div class="frow"><div class="flabel">Leads</div><div class="fbwrap"><div class="fb" id="fLeadsBar" style="background:linear-gradient(90deg,#8a4a28,#bb764d)"></div></div><div class="fval" id="fLeads">–</div></div>
       <div class="fconn"></div>
-      <div class="frow"><div class="flabel">CPL</div><div class="fbwrap"><div class="fb" id="fCplBar" style="background:linear-gradient(90deg,#d0c080,#a09040);opacity:.85"></div></div><div class="fval" id="fCpl">–</div></div>
+      <div class="frow"><div class="flabel">CPL</div><div class="fbwrap"><div class="fb" id="fCplBar" style="background:linear-gradient(90deg,#6a3a1a,#9a5a35);opacity:.85"></div></div><div class="fval" id="fCpl">–</div></div>
     </div>
     <div class="tcard">
       <h3>Performance by Creative</h3>
@@ -334,7 +339,7 @@ function fmtDateRange(s, u) {
 }
 
 function deltaHtml(cur, prev, prevSince, prevUntil, higherIsBetter, fmtFn) {
-  if (!prev && prev !== 0) return '<span style="color:#555570">no prev data</span>';
+  if (!prev && prev !== 0) return '<span style="color:#4a7a80">no prev data</span>';
   const up  = cur >= prev;
   const cls = (up === higherIsBetter) ? 'pos' : 'neg';
   const arr = up ? '▲' : '▼';
@@ -547,36 +552,36 @@ function setGauge(id, value, max, labelId, text) {
 function initCharts() {
   charts['platformChart'] = new Chart(document.getElementById('platformChart'),{
     type:'doughnut',
-    data:{datasets:[{data:[50,50],backgroundColor:['#f0c040','#4a90e2'],borderWidth:0,hoverOffset:4}]},
+    data:{datasets:[{data:[50,50],backgroundColor:['#bb764d','#2a8a92'],borderWidth:0,hoverOffset:4}]},
     options:{cutout:'65%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.toFixed(1)+'%'}}}}
   });
 
   charts['dailyChart'] = new Chart(document.getElementById('dailyChart'),{
     data:{labels:[],datasets:[
-      {type:'bar', label:'Amount Spent ($)',data:[],backgroundColor:'rgba(74,144,226,0.75)',borderRadius:4,yAxisID:'y'},
-      {type:'line',label:'Link Clicks',     data:[],borderColor:'#fff',backgroundColor:'rgba(255,255,255,0.05)',pointBackgroundColor:'#fff',pointRadius:4,tension:0.3,yAxisID:'y2'}
+      {type:'bar', label:'Amount Spent ($)',data:[],backgroundColor:'rgba(187,118,77,0.80)',borderRadius:4,yAxisID:'y'},
+      {type:'line',label:'Link Clicks',     data:[],borderColor:'#f9f8f3',backgroundColor:'rgba(249,248,243,0.05)',pointBackgroundColor:'#f9f8f3',pointRadius:4,tension:0.3,yAxisID:'y2'}
     ]},
     options:{responsive:true,interaction:{mode:'index',intersect:false},
-      plugins:{legend:{labels:{color:'#8080a0',boxWidth:12,font:{size:11}}}},
-      scales:{x:{ticks:{color:'#7070a0',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'}},
-              y:{ticks:{color:'#7070a0',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'},position:'left'},
-              y2:{ticks:{color:'#a0a0c0',font:{size:10}},grid:{display:false},position:'right'}}}
+      plugins:{legend:{labels:{color:'#6d9ea3',boxWidth:12,font:{size:11}}}},
+      scales:{x:{ticks:{color:'#6d9ea3',font:{size:10}},grid:{color:'rgba(255,255,255,0.04)'}},
+              y:{ticks:{color:'#6d9ea3',font:{size:10}},grid:{color:'rgba(255,255,255,0.04)'},position:'left'},
+              y2:{ticks:{color:'#a0bfc2',font:{size:10}},grid:{display:false},position:'right'}}}
   });
 
   ['gCPM','gCPC','gConv'].forEach(id=>{
     charts[id] = new Chart(document.getElementById(id),{
       type:'doughnut',
-      data:{datasets:[{data:[0.5,0.5],backgroundColor:['#4caf50','#2a2945'],borderWidth:0,circumference:180,rotation:270}]},
+      data:{datasets:[{data:[0.5,0.5],backgroundColor:['#bb764d','#012530'],borderWidth:0,circumference:180,rotation:270}]},
       options:{cutout:'72%',plugins:{legend:{display:false},tooltip:{enabled:false}}}
     });
   });
 
   charts['waChart'] = new Chart(document.getElementById('waChart'),{
     type:'line',
-    data:{labels:[],datasets:[{label:'Clicked and Sent a Message',data:[],borderColor:'#f0c040',backgroundColor:'rgba(240,192,64,0.15)',fill:true,tension:0.4,pointRadius:4,pointBackgroundColor:'#f0c040'}]},
+    data:{labels:[],datasets:[{label:'Clicked and Sent a Message',data:[],borderColor:'#bb764d',backgroundColor:'rgba(187,118,77,0.15)',fill:true,tension:0.4,pointRadius:4,pointBackgroundColor:'#bb764d'}]},
     options:{responsive:true,plugins:{legend:{display:false}},
-      scales:{x:{ticks:{color:'#7070a0',font:{size:10}},grid:{color:'rgba(255,255,255,0.04)'}},
-              y:{ticks:{color:'#7070a0',font:{size:10},stepSize:1},grid:{color:'rgba(255,255,255,0.04)'},min:0}}}
+      scales:{x:{ticks:{color:'#6d9ea3',font:{size:10}},grid:{color:'rgba(255,255,255,0.04)'}},
+              y:{ticks:{color:'#6d9ea3',font:{size:10},stepSize:1},grid:{color:'rgba(255,255,255,0.04)'},min:0}}}
   });
 }
 

@@ -269,7 +269,7 @@ tbody tr:hover td{background:#01424d}
         <div class="grange"><span>$0</span><span>$50</span></div>
       </div>
       <div class="gauge">
-        <div class="glabel">Invested / Clicks</div>
+        <div class="glabel">Invested / CTA Click</div>
         <div class="gwrap"><canvas id="gCPC"></canvas></div>
         <div class="gval" id="gvCPC">–</div>
         <div class="grange"><span>$0</span><span>$10</span></div>
@@ -444,6 +444,7 @@ function render(data, since, until) {
   const linkClicks  = ga(ov.actions,'link_click');
   const leads       = ga(ov.actions,'onsite_conversion.messaging_conversation_started_7d');
   const cpl         = leads>0 ? spend/leads : 0;
+  const costPerCTA  = linkClicks>0 ? spend/linkClicks : 0;
   const convRate    = linkClicks>0 ? leads/linkClicks*100 : 0;
 
   const pvSpend = parseFloat(prev.spend||0);
@@ -495,7 +496,7 @@ function render(data, since, until) {
 
   // Gauges
   setGauge('gCPM',  cpm,      50,  'gvCPM',  '$'+cpm.toFixed(2));
-  setGauge('gCPC',  cpc,      10,  'gvCPC',  '$'+cpc.toFixed(2));
+  setGauge('gCPC',  costPerCTA, 10, 'gvCPC',  '$'+costPerCTA.toFixed(2));
   setGauge('gConv', convRate, 25,  'gvConv', convRate.toFixed(2)+'%');
 
   // WA chart

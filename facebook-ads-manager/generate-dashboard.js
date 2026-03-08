@@ -561,7 +561,7 @@ function setGauge(id, value, max, labelId, text) {
   const fill = (pct * 220).toFixed(1);
   const gap  = (440 - pct * 220).toFixed(1);
   const arc = document.getElementById(id.replace('g','gArc'));
-  if (arc) arc.setAttribute('stroke-dasharray', `${fill} ${gap}`);
+  if (arc) arc.setAttribute('stroke-dasharray', \`\${fill} \${gap}\`);
   const lbl = document.getElementById(labelId);
   if (lbl) lbl.textContent = text;
 }

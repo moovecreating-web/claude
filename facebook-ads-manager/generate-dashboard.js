@@ -136,7 +136,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.6)}
 .gauges{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .gauge{background:#013237;border-radius:12px;padding:12px 10px;display:flex;flex-direction:column;align-items:center;border:1px solid #024a56}
 .glabel{font-size:10px;color:#6d9ea3;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
-.gwrap{width:100%;height:80px}
+.gwrap{width:100%;display:block}
 
 .rp{display:flex;flex-direction:column;gap:12px}
 .funnel{background:#013237;border-radius:12px;padding:16px;border:1px solid #024a56}
@@ -262,15 +262,33 @@ tbody tr:hover td{background:#01424d}
     <div class="gauges">
       <div class="gauge">
         <div class="glabel">CPM</div>
-        <div class="gwrap"><canvas id="gCPM"></canvas></div>
+        <svg class="gwrap" viewBox="0 0 200 115" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="100" cy="100" r="70" fill="none" stroke="#012530" stroke-width="22" stroke-dasharray="220 220" stroke-dashoffset="-220"/>
+          <circle cx="100" cy="100" r="70" fill="none" stroke="#bb764d" stroke-width="22" stroke-dasharray="0 440" stroke-dashoffset="-220" stroke-linecap="round" id="gArcCPM"/>
+          <text x="22" y="113" fill="#4a7a80" font-size="11" text-anchor="start">$0</text>
+          <text x="100" y="113" fill="#f9f8f3" font-size="16" font-weight="bold" text-anchor="middle" id="gvCPM">–</text>
+          <text x="178" y="113" fill="#4a7a80" font-size="11" text-anchor="end">$30</text>
+        </svg>
       </div>
       <div class="gauge">
         <div class="glabel">Invested / CTA Click</div>
-        <div class="gwrap"><canvas id="gCPC"></canvas></div>
+        <svg class="gwrap" viewBox="0 0 200 115" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="100" cy="100" r="70" fill="none" stroke="#012530" stroke-width="22" stroke-dasharray="220 220" stroke-dashoffset="-220"/>
+          <circle cx="100" cy="100" r="70" fill="none" stroke="#bb764d" stroke-width="22" stroke-dasharray="0 440" stroke-dashoffset="-220" stroke-linecap="round" id="gArcCPC"/>
+          <text x="22" y="113" fill="#4a7a80" font-size="11" text-anchor="start">$0</text>
+          <text x="100" y="113" fill="#f9f8f3" font-size="16" font-weight="bold" text-anchor="middle" id="gvCPC">–</text>
+          <text x="178" y="113" fill="#4a7a80" font-size="11" text-anchor="end">$10</text>
+        </svg>
       </div>
       <div class="gauge">
         <div class="glabel">Leads / CTA Clicks</div>
-        <div class="gwrap"><canvas id="gConv"></canvas></div>
+        <svg class="gwrap" viewBox="0 0 200 115" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="100" cy="100" r="70" fill="none" stroke="#012530" stroke-width="22" stroke-dasharray="220 220" stroke-dashoffset="-220"/>
+          <circle cx="100" cy="100" r="70" fill="none" stroke="#bb764d" stroke-width="22" stroke-dasharray="0 440" stroke-dashoffset="-220" stroke-linecap="round" id="gArcConv"/>
+          <text x="22" y="113" fill="#4a7a80" font-size="11" text-anchor="start">0%</text>
+          <text x="100" y="113" fill="#f9f8f3" font-size="16" font-weight="bold" text-anchor="middle" id="gvConv">–</text>
+          <text x="178" y="113" fill="#4a7a80" font-size="11" text-anchor="end">25%</text>
+        </svg>
       </div>
     </div>
     <div class="cc">
@@ -540,11 +558,12 @@ function updateChart(id, fn) { if (charts[id]) fn(charts[id]); }
 
 function setGauge(id, value, max, labelId, text) {
   const pct = Math.min(value/max, 1);
-  if (charts[id]) {
-    charts[id].data.datasets[0].data = [pct, 1-pct];
-    charts[id]._gauge.val = text;
-    charts[id].update();
-  }
+  const fill = (pct * 220).toFixed(1);
+  const gap  = (440 - pct * 220).toFixed(1);
+  const arc = document.getElementById(id.replace('g','gArc'));
+  if (arc) arc.setAttribute('stroke-dasharray', `${fill} ${gap}`);
+  const lbl = document.getElementById(labelId);
+  if (lbl) lbl.textContent = text;
 }
 
 function initCharts() {
@@ -564,42 +583,6 @@ function initCharts() {
       scales:{x:{ticks:{color:'#6d9ea3',font:{size:10}},grid:{color:'rgba(255,255,255,0.04)'}},
               y:{ticks:{color:'#6d9ea3',font:{size:10}},grid:{color:'rgba(255,255,255,0.04)'},position:'left'},
               y2:{ticks:{color:'#a0bfc2',font:{size:10}},grid:{display:false},position:'right'}}}
-  });
-
-  const gaugePlugin = {
-    id:'gauge',
-    afterDraw(chart) {
-      const p = chart._gauge;
-      if (!p) return;
-      const meta = chart.getDatasetMeta(0);
-      if (!meta || !meta.data[0]) return;
-      const arc = meta.data[0];
-      const {ctx} = chart;
-      const cx = arc.x, cy = arc.y, ro = arc.outerRadius;
-      ctx.save();
-      ctx.font = 'bold 14px Segoe UI,Arial,sans-serif';
-      ctx.fillStyle = '#f9f8f3';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
-      ctx.fillText(p.val||'–', cx, cy+4);
-      ctx.font = '9px Segoe UI,Arial,sans-serif';
-      ctx.fillStyle = '#4a7a80';
-      ctx.textAlign = 'left';
-      ctx.fillText(p.min||'', cx-ro+2, cy+4);
-      ctx.textAlign = 'right';
-      ctx.fillText(p.max||'', cx+ro-2, cy+4);
-      ctx.restore();
-    }
-  };
-  [{id:'gCPM',min:'$0',max:'$30'},{id:'gCPC',min:'$0',max:'$10'},{id:'gConv',min:'0%',max:'25%'}].forEach(({id,min,max})=>{
-    const c = new Chart(document.getElementById(id),{
-      type:'doughnut',
-      plugins:[gaugePlugin],
-      data:{datasets:[{data:[0.5,0.5],backgroundColor:['#bb764d','#012530'],borderWidth:0,circumference:180,rotation:270}]},
-      options:{maintainAspectRatio:false,cutout:'60%',layout:{padding:2},plugins:{legend:{display:false},tooltip:{enabled:false}}}
-    });
-    c._gauge = {val:'–', min, max};
-    charts[id] = c;
   });
 
   charts['waChart'] = new Chart(document.getElementById('waChart'),{

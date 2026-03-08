@@ -137,6 +137,9 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.6)}
 .gauge{background:#013237;border-radius:12px;padding:12px 10px;display:flex;flex-direction:column;align-items:center;border:1px solid #024a56}
 .glabel{font-size:10px;color:#6d9ea3;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
 .gwrap{width:100%;display:block}
+.gfooter{display:flex;justify-content:space-between;align-items:center;width:100%;padding:3px 0 0}
+.gmin,.gmax{font-size:10px;color:#4a7a80}
+.gval{font-size:16px;font-weight:700;color:#f9f8f3}
 
 .rp{display:flex;flex-direction:column;gap:12px}
 .funnel{background:#013237;border-radius:12px;padding:16px;border:1px solid #024a56}
@@ -262,33 +265,27 @@ tbody tr:hover td{background:#01424d}
     <div class="gauges">
       <div class="gauge">
         <div class="glabel">CPM</div>
-        <svg class="gwrap" viewBox="0 0 200 115" xmlns="http://www.w3.org/2000/svg">
+        <svg class="gwrap" viewBox="0 0 200 112" xmlns="http://www.w3.org/2000/svg">
           <circle cx="100" cy="100" r="70" fill="none" stroke="#012530" stroke-width="22" stroke-dasharray="220 220" stroke-dashoffset="-220"/>
           <circle cx="100" cy="100" r="70" fill="none" stroke="#bb764d" stroke-width="22" stroke-dasharray="0 440" stroke-dashoffset="-220" stroke-linecap="round" id="gArcCPM"/>
-          <text x="22" y="113" fill="#4a7a80" font-size="11" text-anchor="start">$0</text>
-          <text x="100" y="113" fill="#f9f8f3" font-size="16" font-weight="bold" text-anchor="middle" id="gvCPM">–</text>
-          <text x="178" y="113" fill="#4a7a80" font-size="11" text-anchor="end">$30</text>
         </svg>
+        <div class="gfooter"><span class="gmin">$0</span><span class="gval" id="gvCPM">–</span><span class="gmax">$30</span></div>
       </div>
       <div class="gauge">
         <div class="glabel">Invested / CTA Click</div>
-        <svg class="gwrap" viewBox="0 0 200 115" xmlns="http://www.w3.org/2000/svg">
+        <svg class="gwrap" viewBox="0 0 200 112" xmlns="http://www.w3.org/2000/svg">
           <circle cx="100" cy="100" r="70" fill="none" stroke="#012530" stroke-width="22" stroke-dasharray="220 220" stroke-dashoffset="-220"/>
           <circle cx="100" cy="100" r="70" fill="none" stroke="#bb764d" stroke-width="22" stroke-dasharray="0 440" stroke-dashoffset="-220" stroke-linecap="round" id="gArcCPC"/>
-          <text x="22" y="113" fill="#4a7a80" font-size="11" text-anchor="start">$0</text>
-          <text x="100" y="113" fill="#f9f8f3" font-size="16" font-weight="bold" text-anchor="middle" id="gvCPC">–</text>
-          <text x="178" y="113" fill="#4a7a80" font-size="11" text-anchor="end">$10</text>
         </svg>
+        <div class="gfooter"><span class="gmin">$0</span><span class="gval" id="gvCPC">–</span><span class="gmax">$10</span></div>
       </div>
       <div class="gauge">
         <div class="glabel">Leads / CTA Clicks</div>
-        <svg class="gwrap" viewBox="0 0 200 115" xmlns="http://www.w3.org/2000/svg">
+        <svg class="gwrap" viewBox="0 0 200 112" xmlns="http://www.w3.org/2000/svg">
           <circle cx="100" cy="100" r="70" fill="none" stroke="#012530" stroke-width="22" stroke-dasharray="220 220" stroke-dashoffset="-220"/>
           <circle cx="100" cy="100" r="70" fill="none" stroke="#bb764d" stroke-width="22" stroke-dasharray="0 440" stroke-dashoffset="-220" stroke-linecap="round" id="gArcConv"/>
-          <text x="22" y="113" fill="#4a7a80" font-size="11" text-anchor="start">0%</text>
-          <text x="100" y="113" fill="#f9f8f3" font-size="16" font-weight="bold" text-anchor="middle" id="gvConv">–</text>
-          <text x="178" y="113" fill="#4a7a80" font-size="11" text-anchor="end">25%</text>
         </svg>
+        <div class="gfooter"><span class="gmin">0%</span><span class="gval" id="gvConv">–</span><span class="gmax">25%</span></div>
       </div>
     </div>
     <div class="cc">

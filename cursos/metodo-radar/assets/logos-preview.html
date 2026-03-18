@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Método RADAR — Logo Options</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Barlow+Condensed:wght@700;900&display=swap" rel="stylesheet"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #111; font-family: 'Inter', sans-serif; padding: 60px 40px; }
+    h1 { color: #fff; font-size: 14px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: #555; margin-bottom: 60px; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; }
+    .card { background: #0a0a0a; border: 1px solid #222; border-radius: 20px; padding: 48px 32px; display: flex; flex-direction: column; align-items: center; gap: 32px; }
+    .card-dark { background: #050a05; }
+    .label { color: #555; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; text-align: center; }
+    .label strong { display: block; color: #fff; font-size: 15px; margin-top: 6px; letter-spacing: 0; text-transform: none; }
+    .variants { display: flex; flex-direction: column; align-items: center; gap: 24px; margin-top: 8px; }
+    .variant-label { font-size: 11px; color: #333; letter-spacing: 1px; text-transform: uppercase; }
+    .on-white { background: #fff; border-radius: 12px; padding: 20px; display: flex; align-items: center; justify-content: center; }
+  </style>
+</head>
+<body>
+  <h1>Método RADAR — Logo Preview</h1>
+  <div class="grid">
+
+    <!-- OPÇÃO A: Radar Screen (ícone redondo) -->
+    <div class="card">
+      <p class="label">Opção A<strong>Radar Screen</strong></p>
+
+      <!-- Versão escura -->
+      <div class="variants">
+        <span class="variant-label">Fundo escuro</span>
+        <svg width="220" height="220" viewBox="0 0 220 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Anéis -->
+          <circle cx="110" cy="110" r="95" stroke="#00E676" stroke-width="1" opacity="0.25"/>
+          <circle cx="110" cy="110" r="68" stroke="#00E676" stroke-width="1" opacity="0.35"/>
+          <circle cx="110" cy="110" r="42" stroke="#00E676" stroke-width="1.5" opacity="0.5"/>
+          <circle cx="110" cy="110" r="16" stroke="#00E676" stroke-width="1.5" opacity="0.7"/>
+          <!-- Linhas de mira -->
+          <line x1="110" y1="15" x2="110" y2="205" stroke="#00E676" stroke-width="0.8" opacity="0.3"/>
+          <line x1="15" y1="110" x2="205" y2="110" stroke="#00E676" stroke-width="0.8" opacity="0.3"/>
+          <!-- Sweep (linha de varredura) -->
+          <line x1="110" y1="110" x2="182" y2="38" stroke="#00E676" stroke-width="1.5" opacity="0.9"/>
+          <!-- Glow trail (arco) -->
+          <path d="M110 15 A95 95 0 0 1 182 38" stroke="#00E676" stroke-width="8" opacity="0.08" stroke-linecap="round"/>
+          <!-- Blips -->
+          <circle cx="152" cy="72" r="3.5" fill="#00E676" opacity="1">
+            <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="80" cy="88" r="2.5" fill="#00E676" opacity="0.7">
+            <animate attributeName="opacity" values="0.7;0.1;0.7" dur="3s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="135" cy="140" r="2" fill="#00E676" opacity="0.5">
+            <animate attributeName="opacity" values="0.5;0.1;0.5" dur="2.5s" repeatCount="indefinite"/>
+          </circle>
+          <!-- Ponto central -->
+          <circle cx="110" cy="110" r="4" fill="#00E676"/>
+          <!-- Texto MÉTODO -->
+          <text x="110" y="176" text-anchor="middle" fill="#00E676" font-family="Inter, sans-serif" font-size="9" font-weight="700" letter-spacing="4">MÉTODO</text>
+          <!-- Texto RADAR -->
+          <text x="110" y="200" text-anchor="middle" fill="#ffffff" font-family="Inter, sans-serif" font-size="22" font-weight="900" letter-spacing="6">RADAR</text>
+        </svg>
+
+        <span class="variant-label">Fundo branco</span>
+        <div class="on-white">
+          <svg width="180" height="180" viewBox="0 0 220 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="110" cy="110" r="95" stroke="#00C853" stroke-width="1" opacity="0.3"/>
+            <circle cx="110" cy="110" r="68" stroke="#00C853" stroke-width="1" opacity="0.4"/>
+            <circle cx="110" cy="110" r="42" stroke="#00C853" stroke-width="1.5" opacity="0.6"/>
+            <circle cx="110" cy="110" r="16" stroke="#00C853" stroke-width="1.5" opacity="0.8"/>
+            <line x1="110" y1="15" x2="110" y2="205" stroke="#00C853" stroke-width="0.8" opacity="0.35"/>
+            <line x1="15" y1="110" x2="205" y2="110" stroke="#00C853" stroke-width="0.8" opacity="0.35"/>
+            <line x1="110" y1="110" x2="182" y2="38" stroke="#00C853" stroke-width="1.5" opacity="0.9"/>
+            <circle cx="152" cy="72" r="3.5" fill="#00C853"/>
+            <circle cx="80" cy="88" r="2.5" fill="#00C853" opacity="0.7"/>
+            <circle cx="110" cy="110" r="4" fill="#00C853"/>
+            <text x="110" y="176" text-anchor="middle" fill="#00C853" font-family="Inter, sans-serif" font-size="9" font-weight="700" letter-spacing="4">MÉTODO</text>
+            <text x="110" y="200" text-anchor="middle" fill="#111111" font-family="Inter, sans-serif" font-size="22" font-weight="900" letter-spacing="6">RADAR</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- OPÇÃO B: Mira + Texto (horizontal) -->
+    <div class="card">
+      <p class="label">Opção B<strong>Mira + Texto</strong></p>
+
+      <div class="variants">
+        <span class="variant-label">Fundo escuro</span>
+        <svg width="260" height="100" viewBox="0 0 260 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Ícone mira -->
+          <circle cx="48" cy="50" r="34" stroke="#00E676" stroke-width="2"/>
+          <circle cx="48" cy="50" r="20" stroke="#00E676" stroke-width="1.5" opacity="0.6"/>
+          <circle cx="48" cy="50" r="6" stroke="#00E676" stroke-width="1.5" opacity="0.9"/>
+          <circle cx="48" cy="50" r="2.5" fill="#00E676"/>
+          <!-- Linhas da mira -->
+          <line x1="48" y1="16" x2="48" y2="26" stroke="#00E676" stroke-width="2"/>
+          <line x1="48" y1="74" x2="48" y2="84" stroke="#00E676" stroke-width="2"/>
+          <line x1="14" y1="50" x2="24" y2="50" stroke="#00E676" stroke-width="2"/>
+          <line x1="72" y1="50" x2="82" y2="50" stroke="#00E676" stroke-width="2"/>
+          <!-- Blip -->
+          <circle cx="62" cy="36" r="2.5" fill="#00E676">
+            <animate attributeName="opacity" values="1;0.2;1" dur="1.8s" repeatCount="indefinite"/>
+          </circle>
+          <!-- Texto -->
+          <text x="98" y="38" fill="#00E676" font-family="Inter, sans-serif" font-size="10" font-weight="700" letter-spacing="3">MÉTODO</text>
+          <text x="95" y="70" fill="#ffffff" font-family="Inter, sans-serif" font-size="36" font-weight="900" letter-spacing="3">RADAR</text>
+        </svg>
+
+        <span class="variant-label">Fundo branco</span>
+        <div class="on-white">
+          <svg width="240" height="90" viewBox="0 0 260 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="48" cy="50" r="34" stroke="#00C853" stroke-width="2"/>
+            <circle cx="48" cy="50" r="20" stroke="#00C853" stroke-width="1.5" opacity="0.6"/>
+            <circle cx="48" cy="50" r="6" stroke="#00C853" stroke-width="1.5" opacity="0.9"/>
+            <circle cx="48" cy="50" r="2.5" fill="#00C853"/>
+            <line x1="48" y1="16" x2="48" y2="26" stroke="#00C853" stroke-width="2"/>
+            <line x1="48" y1="74" x2="48" y2="84" stroke="#00C853" stroke-width="2"/>
+            <line x1="14" y1="50" x2="24" y2="50" stroke="#00C853" stroke-width="2"/>
+            <line x1="72" y1="50" x2="82" y2="50" stroke="#00C853" stroke-width="2"/>
+            <circle cx="62" cy="36" r="2.5" fill="#00C853"/>
+            <text x="98" y="38" fill="#00C853" font-family="Inter, sans-serif" font-size="10" font-weight="700" letter-spacing="3">MÉTODO</text>
+            <text x="95" y="70" fill="#111111" font-family="Inter, sans-serif" font-size="36" font-weight="900" letter-spacing="3">RADAR</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- OPÇÃO C: Minimalista — só ícone + sigla empilhada -->
+    <div class="card">
+      <p class="label">Opção C<strong>Minimalista Empilhado</strong></p>
+
+      <div class="variants">
+        <span class="variant-label">Fundo escuro</span>
+        <svg width="160" height="200" viewBox="0 0 160 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Mira estilizada -->
+          <circle cx="80" cy="80" r="52" stroke="#00E676" stroke-width="2"/>
+          <circle cx="80" cy="80" r="32" stroke="#00E676" stroke-width="1.5" opacity="0.55"/>
+          <circle cx="80" cy="80" r="12" fill="#00E676" opacity="0.15"/>
+          <circle cx="80" cy="80" r="12" stroke="#00E676" stroke-width="1.5" opacity="0.9"/>
+          <!-- Traços de mira nos extremos -->
+          <line x1="80" y1="28" x2="80" y2="40" stroke="#00E676" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="80" y1="120" x2="80" y2="132" stroke="#00E676" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="28" y1="80" x2="40" y2="80" stroke="#00E676" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="120" y1="80" x2="132" y2="80" stroke="#00E676" stroke-width="2.5" stroke-linecap="round"/>
+          <!-- Ponto central com pulso -->
+          <circle cx="80" cy="80" r="4" fill="#00E676">
+            <animate attributeName="r" values="4;6;4" dur="2s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="1;0.6;1" dur="2s" repeatCount="indefinite"/>
+          </circle>
+          <!-- Blip -->
+          <circle cx="104" cy="56" r="3" fill="#00E676">
+            <animate attributeName="opacity" values="1;0;1" dur="2.4s" repeatCount="indefinite"/>
+          </circle>
+          <!-- Linha sweep -->
+          <line x1="80" y1="80" x2="112" y2="48" stroke="#00E676" stroke-width="1.5" opacity="0.7" stroke-linecap="round"/>
+          <!-- Divisor -->
+          <line x1="20" y1="148" x2="140" y2="148" stroke="#00E676" stroke-width="0.5" opacity="0.3"/>
+          <!-- RADAR texto -->
+          <text x="80" y="173" text-anchor="middle" fill="#ffffff" font-family="Inter, sans-serif" font-size="30" font-weight="900" letter-spacing="8">RADAR</text>
+          <!-- MÉTODO pequeno -->
+          <text x="80" y="192" text-anchor="middle" fill="#00E676" font-family="Inter, sans-serif" font-size="9" font-weight="600" letter-spacing="5">MÉTODO</text>
+        </svg>
+
+        <span class="variant-label">Fundo branco</span>
+        <div class="on-white">
+          <svg width="130" height="165" viewBox="0 0 160 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="80" cy="80" r="52" stroke="#00C853" stroke-width="2"/>
+            <circle cx="80" cy="80" r="32" stroke="#00C853" stroke-width="1.5" opacity="0.55"/>
+            <circle cx="80" cy="80" r="12" fill="#00C853" opacity="0.1"/>
+            <circle cx="80" cy="80" r="12" stroke="#00C853" stroke-width="1.5" opacity="0.9"/>
+            <line x1="80" y1="28" x2="80" y2="40" stroke="#00C853" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="80" y1="120" x2="80" y2="132" stroke="#00C853" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="28" y1="80" x2="40" y2="80" stroke="#00C853" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="120" y1="80" x2="132" y2="80" stroke="#00C853" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="80" cy="80" r="4" fill="#00C853"/>
+            <circle cx="104" cy="56" r="3" fill="#00C853" opacity="0.8"/>
+            <line x1="80" y1="80" x2="112" y2="48" stroke="#00C853" stroke-width="1.5" opacity="0.7" stroke-linecap="round"/>
+            <line x1="20" y1="148" x2="140" y2="148" stroke="#00C853" stroke-width="0.5" opacity="0.4"/>
+            <text x="80" y="173" text-anchor="middle" fill="#0a0a0a" font-family="Inter, sans-serif" font-size="30" font-weight="900" letter-spacing="8">RADAR</text>
+            <text x="80" y="192" text-anchor="middle" fill="#00C853" font-family="Inter, sans-serif" font-size="9" font-weight="600" letter-spacing="5">MÉTODO</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Usos práticos -->
+  <div style="margin-top:60px;">
+    <p style="color:#555;font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-bottom:32px;">Usos práticos</p>
+    <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:center;">
+
+      <!-- Badge no hero -->
+      <div style="background:#050a05;border-radius:12px;padding:20px 28px;display:flex;align-items:center;gap:12px;border:1px solid #1a2a1a;">
+        <svg width="28" height="28" viewBox="0 0 160 160" fill="none">
+          <circle cx="80" cy="80" r="65" stroke="#00E676" stroke-width="2.5"/>
+          <circle cx="80" cy="80" r="40" stroke="#00E676" stroke-width="1.5" opacity="0.55"/>
+          <circle cx="80" cy="80" r="15" stroke="#00E676" stroke-width="2" opacity="0.9"/>
+          <line x1="80" y1="15" x2="80" y2="32" stroke="#00E676" stroke-width="3" stroke-linecap="round"/>
+          <line x1="80" y1="128" x2="80" y2="145" stroke="#00E676" stroke-width="3" stroke-linecap="round"/>
+          <line x1="15" y1="80" x2="32" y2="80" stroke="#00E676" stroke-width="3" stroke-linecap="round"/>
+          <line x1="128" y1="80" x2="145" y2="80" stroke="#00E676" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="80" cy="80" r="5" fill="#00E676"/>
+          <circle cx="102" cy="58" r="4" fill="#00E676" opacity="0.9"/>
+          <line x1="80" y1="80" x2="108" y2="52" stroke="#00E676" stroke-width="2" opacity="0.7"/>
+        </svg>
+        <div>
+          <div style="color:#00E676;font-size:10px;font-weight:700;letter-spacing:2px;">MÉTODO RADAR</div>
+          <div style="color:#fff;font-size:12px;opacity:0.5;">Badge no hero da landing page</div>
+        </div>
+      </div>
+
+      <!-- Favicon -->
+      <div style="background:#050a05;border-radius:12px;padding:20px 28px;border:1px solid #1a2a1a;">
+        <div style="color:#555;font-size:11px;letter-spacing:1px;margin-bottom:10px;text-transform:uppercase;">Favicon / ícone app</div>
+        <svg width="48" height="48" viewBox="0 0 160 160" fill="none">
+          <rect width="160" height="160" rx="32" fill="#050a05"/>
+          <circle cx="80" cy="80" r="60" stroke="#00E676" stroke-width="3"/>
+          <circle cx="80" cy="80" r="38" stroke="#00E676" stroke-width="2" opacity="0.55"/>
+          <circle cx="80" cy="80" r="16" stroke="#00E676" stroke-width="2.5" opacity="0.9"/>
+          <line x1="80" y1="20" x2="80" y2="34" stroke="#00E676" stroke-width="3" stroke-linecap="round"/>
+          <line x1="80" y1="126" x2="80" y2="140" stroke="#00E676" stroke-width="3" stroke-linecap="round"/>
+          <line x1="20" y1="80" x2="34" y2="80" stroke="#00E676" stroke-width="3" stroke-linecap="round"/>
+          <line x1="126" y1="80" x2="140" y2="80" stroke="#00E676" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="80" cy="80" r="5" fill="#00E676"/>
+          <circle cx="104" cy="56" r="4.5" fill="#00E676"/>
+          <line x1="80" y1="80" x2="108" y2="52" stroke="#00E676" stroke-width="2" opacity="0.8"/>
+        </svg>
+      </div>
+
+      <!-- Assinatura de email / watermark -->
+      <div style="background:#050a05;border-radius:12px;padding:20px 28px;border:1px solid #1a2a1a;">
+        <div style="color:#555;font-size:11px;letter-spacing:1px;margin-bottom:12px;text-transform:uppercase;">Marca d'água no dashboard</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <svg width="18" height="18" viewBox="0 0 160 160" fill="none">
+            <circle cx="80" cy="80" r="65" stroke="#00E676" stroke-width="4"/>
+            <circle cx="80" cy="80" r="40" stroke="#00E676" stroke-width="3" opacity="0.5"/>
+            <circle cx="80" cy="80" r="16" stroke="#00E676" stroke-width="3.5"/>
+            <line x1="80" y1="15" x2="80" y2="33" stroke="#00E676" stroke-width="5" stroke-linecap="round"/>
+            <line x1="80" y1="127" x2="80" y2="145" stroke="#00E676" stroke-width="5" stroke-linecap="round"/>
+            <line x1="15" y1="80" x2="33" y2="80" stroke="#00E676" stroke-width="5" stroke-linecap="round"/>
+            <line x1="127" y1="80" x2="145" y2="80" stroke="#00E676" stroke-width="5" stroke-linecap="round"/>
+            <circle cx="80" cy="80" r="6" fill="#00E676"/>
+          </svg>
+          <span style="color:#00E676;font-size:10px;font-weight:700;letter-spacing:2px;">MÉTODO RADAR</span>
+          <span style="color:#333;font-size:10px;">· por Moove Creating</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

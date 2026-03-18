@@ -46,7 +46,7 @@
       align-items: center;
       justify-content: space-between;
     }
-    .navbar-logo img { height: 36px; display: block; }
+    .navbar-logo img { height: 64px; display: block; }
     .navbar-cta {
       background: var(--orange);
       color: #fff;
@@ -150,15 +150,27 @@
     .btn-secondary:hover { background: rgba(255,255,255,0.12); }
     .hero-el-shine {
       position: absolute;
-      right: -60px; top: -20px;
-      width: 120px; opacity: 0.7;
+      right: -80px; top: -40px;
+      width: 180px; opacity: 0.85;
       animation: float 4s ease-in-out infinite;
     }
     .hero-el-stars {
       position: absolute;
-      left: -80px; bottom: 20px;
-      width: 100px; opacity: 0.6;
+      left: -100px; bottom: 10px;
+      width: 140px; opacity: 0.75;
       animation: float 5s ease-in-out infinite reverse;
+    }
+    .hero-el-moove {
+      position: absolute;
+      left: -120px; top: 20px;
+      width: 100px; opacity: 0.5;
+      animation: float 6s ease-in-out infinite;
+    }
+    .hero-el-circle {
+      position: absolute;
+      right: -100px; bottom: -20px;
+      width: 130px; opacity: 0.4;
+      animation: float 7s ease-in-out infinite reverse;
     }
     @keyframes float {
       0%, 100% { transform: translateY(0); }
@@ -443,16 +455,28 @@
     }
     .cta-el-bigideas {
       position: absolute;
-      right: 0; top: -20px;
-      width: 120px;
-      opacity: 0.5;
+      right: 0; top: -40px;
+      width: 180px;
+      opacity: 0.7;
     }
     .cta-el-creating {
       position: absolute;
-      left: -10px; bottom: -20px;
-      width: 110px;
-      opacity: 0.4;
+      left: -10px; bottom: -30px;
+      width: 160px;
+      opacity: 0.6;
     }
+    .why-el-stars {
+      position: absolute;
+      bottom: -20px; left: -30px;
+      width: 90px; opacity: 0.6;
+      animation: float 5s ease-in-out infinite;
+    }
+    .services-el {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: -20px;
+    }
+    .services-el img { width: 80px; opacity: 0.6; }
     @media (max-width: 600px) {
       .cta-el-bigideas, .cta-el-creating { display: none; }
     }
@@ -519,6 +543,8 @@
       </div>
       <img src="/assets/shine_element.png" class="hero-el-shine" alt="" />
       <img src="/assets/stars_element.png" class="hero-el-stars" alt="" />
+      <img src="/assets/moove_element.png" class="hero-el-moove" alt="" />
+      <img src="/assets/circle_element.png" class="hero-el-circle" alt="" />
     </div>
   </section>
 
@@ -533,6 +559,7 @@
   <!-- SERVICES -->
   <section class="services" id="servicos">
     <div class="container">
+      <div class="services-el"><img src="/assets/shine_element.png" alt="" /></div>
       <div class="services-header">
         <span class="section-label">O que fazemos</span>
         <h2 class="section-title">Cada serviço com<br />estratégia e precisão</h2>
@@ -599,6 +626,7 @@
             </div>
           </div>
           <img src="/assets/shine_element.png" class="why-el" alt="" />
+          <img src="/assets/stars_element.png" class="why-el-stars" alt="" />
         </div>
         <div>
           <span class="section-label">Por que a Moove</span>

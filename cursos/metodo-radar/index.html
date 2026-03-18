@@ -108,12 +108,12 @@
     /* Radar circle decoration */
     .radar-deco {
       position: absolute;
-      top: 50%; left: 30%;
+      top: 50%; left: 72%;
       transform: translate(-50%, -50%);
       width: 480px; height: 480px;
       z-index: 1;
       pointer-events: none;
-      opacity: 0.12;
+      opacity: 0.35;
     }
 
     .radar-deco svg { width: 100%; height: 100%; }
@@ -129,8 +129,8 @@
     }
 
     @keyframes radar-pulse {
-      0%, 100% { opacity: 0.12; }
-      50% { opacity: 0.2; }
+      0%, 100% { opacity: 0.35; }
+      50% { opacity: 0.5; }
     }
 
     .radar-deco { animation: radar-pulse 4s ease-in-out infinite; }

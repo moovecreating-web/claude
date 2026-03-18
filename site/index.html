@@ -41,12 +41,12 @@
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border-bottom: 1px solid rgba(255,255,255,0.06);
-      padding: 16px 48px;
+      padding: 10px 48px;
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
-    .navbar-logo img { height: 64px; display: block; }
+    .navbar-logo img { height: 130px; display: block; }
     .navbar-cta {
       background: var(--orange);
       color: #fff;
@@ -64,7 +64,7 @@
       .navbar-cta { font-size: 13px; padding: 10px 18px; }
     }
 
-    body { padding-top: 68px; }
+    body { padding-top: 150px; }
 
     /* ── HERO ── */
     .hero {
@@ -166,12 +166,20 @@
       width: 100px; opacity: 0.5;
       animation: float 6s ease-in-out infinite;
     }
-    .hero-el-circle {
-      position: absolute;
-      right: -100px; bottom: -20px;
-      width: 130px; opacity: 0.4;
-      animation: float 7s ease-in-out infinite reverse;
+    .hero-el-circle { display: none; }
+    .word-circle {
+      position: relative;
+      display: inline-block;
     }
+    .word-circle img {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -48%);
+      width: 115%;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .word-circle span { position: relative; z-index: 1; }
     @keyframes float {
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-12px); }
@@ -533,7 +541,7 @@
       <div class="hero-badge">
         <span>✦</span> Agência de Marketing Digital
       </div>
-      <h1>Seu negócio precisa de<br /><em>resultados reais.</em></h1>
+      <h1>Seu negócio precisa de<br /><em><span class="word-circle"><img src="/assets/circle_element.png" alt="" /><span>resultados reais.</span></span></em></h1>
       <p>Tráfego Pago, Social Media e Automações com IA — tudo integrado para crescer de verdade.</p>
       <div class="hero-btns">
         <a href="https://wa.me/554192550997?text=Olá!%20Quero%20saber%20mais%20sobre%20os%20serviços%20da%20Moove%20Creating." class="btn-primary" target="_blank">
@@ -544,7 +552,6 @@
       <img src="/assets/shine_element.png" class="hero-el-shine" alt="" />
       <img src="/assets/stars_element.png" class="hero-el-stars" alt="" />
       <img src="/assets/moove_element.png" class="hero-el-moove" alt="" />
-      <img src="/assets/circle_element.png" class="hero-el-circle" alt="" />
     </div>
   </section>
 

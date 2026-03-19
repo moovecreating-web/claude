@@ -180,11 +180,15 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4);cursor:poi
 #platformChart,#objDonut{cursor:pointer}
 
 /* ══ AUDIENCE TAB ══ */
-.aud-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.aud-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;cursor:pointer;border-radius:6px;padding:2px 4px;transition:opacity .2s,background .1s}
+.aud-bar-row:hover{background:rgba(183,115,74,.06)}
+.aud-bar-row.dim-aud{opacity:.22}
 .aud-bar-label{font-size:12px;color:#5a8a7a;width:100px;flex-shrink:0;text-align:right;white-space:nowrap}
 .aud-bar-bg{flex:1;height:18px;background:#022028;border-radius:5px;overflow:hidden}
 .aud-bar-fill{height:100%;border-radius:5px;transition:width .6s ease}
 .aud-bar-val{font-size:12px;font-weight:700;color:#d8ebe6;width:38px;text-align:right;flex-shrink:0}
+.aud-fbar{display:none;align-items:center;gap:8px;padding:5px 2px 8px;flex-wrap:wrap}
+.aud-fbar.show{display:flex}
 </style>
 </head>
 <body>
@@ -427,9 +431,17 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4);cursor:poi
       <div class="kpi blue"><div class="kpi-icon">📱</div><div class="kpi-label">% Mobile</div><div class="kpi-val" id="ak-mobile">–</div></div>
       <div class="kpi purple"><div class="kpi-icon">🌍</div><div class="kpi-label">Countries</div><div class="kpi-val" id="ak-countries">–</div></div>
     </div>
+    <div class="aud-fbar" id="audFilterBar">
+      <span class="fbar-label">Age filter</span>
+      <span class="filter-chip" id="audChipAge" style="display:none">
+        <span id="audChipAgeLabel"></span>
+        <button onclick="clearAudFilter()" title="Remove">×</button>
+      </span>
+      <span style="font-size:10px;color:#5a8a7a;font-style:italic">visual only — API limitation</span>
+    </div>
     <div class="grid2">
       <div class="card">
-        <div class="card-head"><div class="card-title">Age Range</div><span class="cbadge blue">% impressions</span></div>
+        <div class="card-head"><div class="card-title">Age Range</div><span class="cbadge blue">% impressions · click to filter</span></div>
         <div id="ageChart" style="padding-top:6px"></div>
       </div>
       <div class="card" style="display:flex;flex-direction:column">
@@ -440,7 +452,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4);cursor:poi
     </div>
     <div class="grid2">
       <div class="card">
-        <div class="card-head"><div class="card-title">Placements</div><span class="cbadge blue">% impressions</span></div>
+        <div class="card-head"><div class="card-title">Placements</div><span class="cbadge blue">% impressions · click to filter</span></div>
         <div id="placementsChart" style="padding-top:6px"></div>
       </div>
       <div class="card" style="display:flex;flex-direction:column">
@@ -466,6 +478,7 @@ let selectedCampIds = [];
 let lastData = null;
 let currentTab = 'overview';
 let activeFilters = { platform: null, objective: null, objectiveCampIds: [] };
+let activeAudFilters = { ageGroup: null };
 
 // ══ HELPERS ══
 const ga    = (actions, type) => parseInt((actions||[]).find(a=>a.action_type===type)?.value||'0');
@@ -828,7 +841,7 @@ function renderAll(data, since, until) {
   const ageColors= ['#b7734a','#4a90e2','#4cd97a','#d4a017','#8870ff','#1ecfd6','#e07060'];
   const ageSorted= ageOrder.map((age,i)=>{const row=byAge.find(d=>d.age===age);return{age,pct:parseInt(row?.impressions||0)/ageTot*100,col:ageColors[i]};}).filter(d=>d.pct>0);
   document.getElementById('ageChart').innerHTML = ageSorted.map(d=>`
-    <div class="aud-bar-row">
+    <div class="aud-bar-row${activeAudFilters.ageGroup && activeAudFilters.ageGroup!==d.age?' dim-aud':''}" onclick="setAudAgeFilter('${d.age}')">
       <div class="aud-bar-label">${d.age}</div>
       <div class="aud-bar-bg"><div class="aud-bar-fill" style="width:${d.pct.toFixed(1)}%;background:${d.col}"></div></div>
       <div class="aud-bar-val">${d.pct.toFixed(0)}%</div>
@@ -853,12 +866,15 @@ function renderAll(data, since, until) {
   const platMap={};for(const d of byPlacement){const lbl=platLabel(d.publisher_platform,d.platform_position);platMap[lbl]=(platMap[lbl]||0)+parseInt(d.impressions||0);}
   const platEntries=Object.entries(platMap).sort((a,b)=>b[1]-a[1]).slice(0,8);
   const platTot=platEntries.reduce((s,[,v])=>s+v,0)||1;
-  document.getElementById('placementsChart').innerHTML=platEntries.map(([k,v])=>`
-    <div class="aud-bar-row">
+  function platPlatform(l){if(l.startsWith('IG'))return'instagram';if(l.startsWith('FB'))return'facebook';if(l.includes('Audience'))return'audience_network';return null;}
+  document.getElementById('placementsChart').innerHTML=platEntries.map(([k,v])=>{
+    const pp=platPlatform(k);
+    const isDim=activeFilters.platform&&activeFilters.platform!==pp;
+    return`<div class="aud-bar-row${isDim?' dim-aud':''}" onclick="setAudPlatFilter('${pp}')">
       <div class="aud-bar-label">${k}</div>
       <div class="aud-bar-bg"><div class="aud-bar-fill" style="width:${(v/platTot*100).toFixed(1)}%;background:${platCol(k)}"></div></div>
       <div class="aud-bar-val">${(v/platTot*100).toFixed(0)}%</div>
-    </div>`).join('');
+    </div>`;}).join('');
 
   // Devices donut
   const devColMap={mobile:'#b7734a',desktop:'#4a90e2',connected_tv:'#4cd97a',tablet:'#1ecfd6'};
@@ -949,6 +965,46 @@ async function applyFilters() {
   } finally {
     btn.disabled = false;
     document.getElementById('overlay').classList.remove('show');
+  }
+}
+
+// ══ AUDIENCE CROSS-FILTER ══
+function setAudAgeFilter(age) {
+  activeAudFilters.ageGroup = activeAudFilters.ageGroup === age ? null : age;
+  if (!lastData) return;
+  const {byAge} = lastData.data;
+  const ageOrder = ['13-17','18-24','25-34','35-44','45-54','55-64','65+'];
+  const ageColors= ['#b7734a','#4a90e2','#4cd97a','#d4a017','#8870ff','#1ecfd6','#e07060'];
+  const ageTot   = byAge.reduce((s,d)=>s+parseInt(d.impressions||0),0)||1;
+  const ageSorted= ageOrder.map((a,i)=>{const row=byAge.find(d=>d.age===a);return{age:a,pct:parseInt(row?.impressions||0)/ageTot*100,col:ageColors[i]};}).filter(d=>d.pct>0);
+  document.getElementById('ageChart').innerHTML = ageSorted.map(d=>`
+    <div class="aud-bar-row${activeAudFilters.ageGroup && activeAudFilters.ageGroup!==d.age?' dim-aud':''}" onclick="setAudAgeFilter('${d.age}')">
+      <div class="aud-bar-label">${d.age}</div>
+      <div class="aud-bar-bg"><div class="aud-bar-fill" style="width:${d.pct.toFixed(1)}%;background:${d.col}"></div></div>
+      <div class="aud-bar-val">${d.pct.toFixed(0)}%</div>
+    </div>`).join('');
+  updateAudFilterBadge();
+}
+function setAudPlatFilter(pl) {
+  if (!pl) return;
+  activeFilters.platform = activeFilters.platform === pl ? null : pl;
+  updateFilterBadge();
+  applyFilters();
+}
+function clearAudFilter() {
+  activeAudFilters.ageGroup = null;
+  setAudAgeFilter(null);
+}
+function updateAudFilterBadge() {
+  const bar  = document.getElementById('audFilterBar');
+  const chip = document.getElementById('audChipAge');
+  if (activeAudFilters.ageGroup) {
+    document.getElementById('audChipAgeLabel').textContent = 'Age: '+activeAudFilters.ageGroup;
+    chip.style.display = 'inline-flex';
+    bar.classList.add('show');
+  } else {
+    chip.style.display = 'none';
+    bar.classList.remove('show');
   }
 }
 

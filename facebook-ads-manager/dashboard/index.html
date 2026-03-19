@@ -178,6 +178,13 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4);cursor:poi
 .fbar-clear{background:none;border:1px solid #0d3c3c;color:#5a8a7a;padding:3px 10px;border-radius:20px;font-size:11px;cursor:pointer}
 .fbar-clear:hover{border-color:#94694c;color:#94694c}
 #platformChart,#objDonut{cursor:pointer}
+
+/* ══ AUDIENCE TAB ══ */
+.aud-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.aud-bar-label{font-size:12px;color:#5a8a7a;width:100px;flex-shrink:0;text-align:right;white-space:nowrap}
+.aud-bar-bg{flex:1;height:18px;background:#022028;border-radius:5px;overflow:hidden}
+.aud-bar-fill{height:100%;border-radius:5px;transition:width .6s ease}
+.aud-bar-val{font-size:12px;font-weight:700;color:#d8ebe6;width:38px;text-align:right;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -202,6 +209,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4);cursor:poi
     <div class="nav-item active" onclick="switchTab('overview',this)">Overview</div>
     <div class="nav-item" onclick="switchTab('campaigns',this)">Campaigns</div>
     <div class="nav-item" onclick="switchTab('ads',this)">Creatives</div>
+    <div class="nav-item" onclick="switchTab('audience',this)">Audience</div>
   </nav>
 
   <div class="hcontrols">
@@ -411,6 +419,38 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4);cursor:poi
     </div>
   </div>
 
+  <!-- ═══ TAB: AUDIENCE ═══ -->
+  <div id="tab-audience" class="tab-view">
+    <div class="grid4">
+      <div class="kpi teal"><div class="kpi-icon">👥</div><div class="kpi-label">Reach</div><div class="kpi-val" id="ak-reach">–</div></div>
+      <div class="kpi gold"><div class="kpi-icon">🔁</div><div class="kpi-label">Frequency</div><div class="kpi-val" id="ak-freq">–</div></div>
+      <div class="kpi blue"><div class="kpi-icon">📱</div><div class="kpi-label">% Mobile</div><div class="kpi-val" id="ak-mobile">–</div></div>
+      <div class="kpi purple"><div class="kpi-icon">🌍</div><div class="kpi-label">Countries</div><div class="kpi-val" id="ak-countries">–</div></div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-head"><div class="card-title">Age Range</div><span class="cbadge blue">% impressions</span></div>
+        <div id="ageChart" style="padding-top:6px"></div>
+      </div>
+      <div class="card" style="display:flex;flex-direction:column">
+        <div class="card-head"><div class="card-title">Gender</div><span class="cbadge gold">% impressions</span></div>
+        <div style="height:190px;position:relative"><canvas id="genderDonut"></canvas></div>
+        <div class="dleg" id="genderLegend" style="margin-top:10px"></div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-head"><div class="card-title">Placements</div><span class="cbadge blue">% impressions</span></div>
+        <div id="placementsChart" style="padding-top:6px"></div>
+      </div>
+      <div class="card" style="display:flex;flex-direction:column">
+        <div class="card-head"><div class="card-title">Devices</div><span class="cbadge gold">% impressions</span></div>
+        <div style="height:190px;position:relative"><canvas id="devicesDonut"></canvas></div>
+        <div class="dleg" id="devicesLegend" style="margin-top:10px"></div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -514,18 +554,26 @@ async function fetchData(since, until) {
   const baseP = {time_range:tr,level:'account',...(fullFiltering&&{filtering:fullFiltering})};
   const insPath = `/act_${ACCOUNT_ID}/insights`;
 
-  const [ov,daily,plat,byAd,prev,byCamp] = await Promise.all([
+  const [ov,daily,plat,byAd,prev,byCamp,byAge,byGender,byPlacement,byDevice,byCountry] = await Promise.all([
     api(insPath,{...baseP,fields:'impressions,reach,clicks,spend,ctr,cpm,cpc,actions'}),
     api(insPath,{...baseP,fields:'impressions,clicks,spend,actions',time_increment:1}),
     api(insPath,{time_range:tr,level:'account',...(campFiltering&&{filtering:campFiltering}),fields:'spend,impressions',breakdowns:'publisher_platform'}),
     api(insPath,{...baseP,fields:'ad_name,impressions,clicks,spend,ctr,actions',level:'ad'}),
     api(insPath,{time_range:trPv,level:'account',...(fullFiltering&&{filtering:fullFiltering}),fields:'spend,actions'}),
     api(insPath,{time_range:tr,level:'campaign',...(campFiltering&&{filtering:campFiltering}),fields:'campaign_name,campaign_id,impressions,clicks,spend,ctr,actions',limit:50}),
+    api(insPath,{...baseP,fields:'impressions',breakdowns:'age'}),
+    api(insPath,{...baseP,fields:'impressions',breakdowns:'gender'}),
+    api(insPath,{time_range:tr,level:'account',...(campFiltering&&{filtering:campFiltering}),fields:'impressions',breakdowns:'publisher_platform,platform_position'}),
+    api(insPath,{...baseP,fields:'impressions',breakdowns:'device_platform'}),
+    api(insPath,{time_range:tr,level:'account',...(campFiltering&&{filtering:campFiltering}),fields:'reach',breakdowns:'country',limit:100}),
   ]);
 
   return {
     ov:ov[0]||{}, daily:Array.isArray(daily)?daily:[], plat:Array.isArray(plat)?plat:[],
     byAd:Array.isArray(byAd)?byAd:[], prev:prev[0]||{}, byCamp:Array.isArray(byCamp)?byCamp:[],
+    byAge:Array.isArray(byAge)?byAge:[], byGender:Array.isArray(byGender)?byGender:[],
+    byPlacement:Array.isArray(byPlacement)?byPlacement:[], byDevice:Array.isArray(byDevice)?byDevice:[],
+    byCountry:Array.isArray(byCountry)?byCountry:[],
     prevSince:prevSince.toISOString().split('T')[0],
     prevUntil:prevUntil.toISOString().split('T')[0]
   };
@@ -534,7 +582,7 @@ async function fetchData(since, until) {
 // ══ RENDER ALL ══
 function renderAll(data, since, until) {
   lastData = {data,since,until};
-  const {ov,daily,plat,byAd,prev,byCamp,prevSince,prevUntil} = data;
+  const {ov,daily,plat,byAd,prev,byCamp,byAge,byGender,byPlacement,byDevice,byCountry,prevSince,prevUntil} = data;
 
   const spend       = parseFloat(ov.spend||0);
   const impressions = parseInt(ov.impressions||0);
@@ -766,6 +814,64 @@ function renderAll(data, since, until) {
   document.getElementById('ft-leads').textContent  = leads;
   document.getElementById('ft-cpl').textContent    = fmt$(cpl);
 
+  // ══ AUDIENCE TAB ══
+  document.getElementById('ak-reach').textContent     = fmtK(reach);
+  document.getElementById('ak-freq').textContent      = reach>0?(impressions/reach).toFixed(2)+'x':'–';
+  const devTotal = byDevice.reduce((s,d)=>s+parseInt(d.impressions||0),0)||1;
+  const mobileImpr = byDevice.filter(d=>d.device_platform==='mobile').reduce((s,d)=>s+parseInt(d.impressions||0),0);
+  document.getElementById('ak-mobile').textContent    = (mobileImpr/devTotal*100).toFixed(0)+'%';
+  document.getElementById('ak-countries').textContent = byCountry.length||'–';
+
+  // Age bars
+  const ageOrder = ['13-17','18-24','25-34','35-44','45-54','55-64','65+'];
+  const ageTot   = byAge.reduce((s,d)=>s+parseInt(d.impressions||0),0)||1;
+  const ageColors= ['#b7734a','#4a90e2','#4cd97a','#d4a017','#8870ff','#1ecfd6','#e07060'];
+  const ageSorted= ageOrder.map((age,i)=>{const row=byAge.find(d=>d.age===age);return{age,pct:parseInt(row?.impressions||0)/ageTot*100,col:ageColors[i]};}).filter(d=>d.pct>0);
+  document.getElementById('ageChart').innerHTML = ageSorted.map(d=>`
+    <div class="aud-bar-row">
+      <div class="aud-bar-label">${d.age}</div>
+      <div class="aud-bar-bg"><div class="aud-bar-fill" style="width:${d.pct.toFixed(1)}%;background:${d.col}"></div></div>
+      <div class="aud-bar-val">${d.pct.toFixed(0)}%</div>
+    </div>`).join('');
+
+  // Gender donut
+  const genderMap={male:'#4a90e2',female:'#b7734a',unknown:'#8870ff'};
+  const genderLbl={male:'Male',female:'Female',unknown:'Undefined'};
+  const genderData=byGender.map(d=>({key:d.gender,val:parseInt(d.impressions||0)})).sort((a,b)=>b.val-a.val);
+  const genderTot=genderData.reduce((s,d)=>s+d.val,0)||1;
+  destroyChart('genderDonut');
+  charts.genderDonut=new Chart(document.getElementById('genderDonut'),{type:'doughnut',
+    data:{labels:genderData.map(d=>genderLbl[d.key]||d.key),datasets:[{data:genderData.map(d=>d.val),backgroundColor:genderData.map(d=>genderMap[d.key]||'#1ecfd6'),borderWidth:0,hoverOffset:6}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false},tooltip:{backgroundColor:'#061010',cornerRadius:8,bodyColor:'#7aaca0',callbacks:{label:ctx=>' '+(ctx.parsed/genderTot*100).toFixed(1)+'%'}}}}});
+  document.getElementById('genderLegend').innerHTML=genderData.map(d=>`
+    <div class="dleg-row"><div class="dleg-left"><div class="dleg-dot" style="background:${genderMap[d.key]||'#1ecfd6'}"></div><div class="dleg-name">${genderLbl[d.key]||d.key}</div></div>
+    <div><span class="dleg-val">${(d.val/genderTot*100).toFixed(1)}%</span><span class="dleg-pct">${fmtK(d.val)}</span></div></div>`).join('');
+
+  // Placements bars
+  function platLabel(pl,pos){const p=(pos||'').toLowerCase(),pf=(pl||'').toLowerCase();if(pf==='instagram'){if(p.includes('feed'))return'IG Feed';if(p.includes('story')||p.includes('stories'))return'IG Stories';if(p.includes('reel'))return'IG Reels';if(p.includes('explore'))return'IG Explore';return'IG Other';}if(pf==='facebook'){if(p.includes('feed'))return'FB Feed';if(p.includes('story')||p.includes('stories'))return'FB Stories';if(p.includes('reel'))return'FB Reels';if(p.includes('marketplace'))return'FB Marketplace';if(p.includes('right'))return'FB Right Col';return'FB Other';}if(pf==='audience_network')return'Audience Net.';if(pf==='messenger')return'Messenger';return pl;}
+  function platCol(l){if(l.startsWith('IG'))return'#b7734a';if(l.startsWith('FB'))return'#4a90e2';if(l.includes('Audience'))return'#8870ff';return'#1ecfd6';}
+  const platMap={};for(const d of byPlacement){const lbl=platLabel(d.publisher_platform,d.platform_position);platMap[lbl]=(platMap[lbl]||0)+parseInt(d.impressions||0);}
+  const platEntries=Object.entries(platMap).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const platTot=platEntries.reduce((s,[,v])=>s+v,0)||1;
+  document.getElementById('placementsChart').innerHTML=platEntries.map(([k,v])=>`
+    <div class="aud-bar-row">
+      <div class="aud-bar-label">${k}</div>
+      <div class="aud-bar-bg"><div class="aud-bar-fill" style="width:${(v/platTot*100).toFixed(1)}%;background:${platCol(k)}"></div></div>
+      <div class="aud-bar-val">${(v/platTot*100).toFixed(0)}%</div>
+    </div>`).join('');
+
+  // Devices donut
+  const devColMap={mobile:'#b7734a',desktop:'#4a90e2',connected_tv:'#4cd97a',tablet:'#1ecfd6'};
+  const devLblMap={mobile:'Mobile',desktop:'Desktop',connected_tv:'TV',tablet:'Tablet'};
+  const devData=byDevice.map(d=>({key:d.device_platform,val:parseInt(d.impressions||0)})).sort((a,b)=>b.val-a.val);
+  destroyChart('devicesDonut');
+  charts.devicesDonut=new Chart(document.getElementById('devicesDonut'),{type:'doughnut',
+    data:{labels:devData.map(d=>devLblMap[d.key]||d.key),datasets:[{data:devData.map(d=>d.val),backgroundColor:devData.map(d=>devColMap[d.key]||'#8870ff'),borderWidth:0,hoverOffset:6}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false},tooltip:{backgroundColor:'#061010',cornerRadius:8,bodyColor:'#7aaca0',callbacks:{label:ctx=>' '+(ctx.parsed/devTotal*100).toFixed(1)+'%'}}}}});
+  document.getElementById('devicesLegend').innerHTML=devData.map(d=>`
+    <div class="dleg-row"><div class="dleg-left"><div class="dleg-dot" style="background:${devColMap[d.key]||'#8870ff'}"></div><div class="dleg-name">${devLblMap[d.key]||d.key}</div></div>
+    <div><span class="dleg-val">${(d.val/devTotal*100).toFixed(1)}%</span><span class="dleg-pct">${fmtK(d.val)}</span></div></div>`).join('');
+
   // Ads bar chart
   destroyChart('adsBar');
   const topAds = adRows.slice(0,10);
@@ -818,7 +924,7 @@ function switchTab(tab, el) {
   const view = document.getElementById('tab-'+tab);
   view.classList.add('active','fade-in');
   setTimeout(()=>view.classList.remove('fade-in'),300);
-  const titles = {overview:'Overview',campaigns:'Campaigns',ads:'Creatives'};
+  const titles = {overview:'Overview',campaigns:'Campaigns',ads:'Creatives',audience:'Audience'};
   document.getElementById('pageTitle').textContent = titles[tab];
 }
 

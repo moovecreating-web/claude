@@ -574,10 +574,10 @@ async function fetchData(since, until) {
     api(insPath,{...baseP,fields:'ad_name,impressions,clicks,spend,ctr,actions',level:'ad'}),
     api(insPath,{time_range:trPv,level:'account',...(fullFiltering&&{filtering:fullFiltering}),fields:'spend,actions'}),
     api(insPath,{time_range:tr,level:'campaign',...(campFiltering&&{filtering:campFiltering}),fields:'campaign_name,campaign_id,impressions,clicks,spend,ctr,actions',limit:50}),
-    api(insPath,{...baseP,fields:'impressions',breakdowns:'age'}),
-    api(insPath,{...baseP,fields:'impressions',breakdowns:'gender'}),
+    api(insPath,{time_range:tr,level:'account',...(campFiltering&&{filtering:campFiltering}),fields:'impressions',breakdowns:'age'}),
+    api(insPath,{time_range:tr,level:'account',...(campFiltering&&{filtering:campFiltering}),fields:'impressions',breakdowns:'gender'}),
     api(insPath,{time_range:tr,level:'account',...(campFiltering&&{filtering:campFiltering}),fields:'impressions',breakdowns:'publisher_platform,platform_position'}),
-    api(insPath,{...baseP,fields:'impressions',breakdowns:'device_platform'}),
+    api(insPath,{time_range:tr,level:'account',...(campFiltering&&{filtering:campFiltering}),fields:'impressions',breakdowns:'device_platform'}),
     api(insPath,{time_range:tr,level:'account',...(campFiltering&&{filtering:campFiltering}),fields:'reach',breakdowns:'country',limit:100}),
   ]);
 

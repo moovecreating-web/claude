@@ -1,57 +1,31 @@
-name: Update Attorney Isabela Dashboard
+name: Deploy Attorney Isabela Dashboard
 
 on:
-  schedule:
-    # Runs every day at 08:00 BRT (11:00 UTC)
-    - cron: '0 11 * * *'
+  push:
+    branches: [main]
+    paths:
+      - 'facebook-ads-manager/dashboard/**'
   workflow_dispatch:
-    # Allow manual run from GitHub Actions tab
 
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Workflow-level concurrency: when a new run starts, cancels ALL jobs
-# (build AND deploy) from any previous run in this workflow.
 concurrency:
   group: ${{ github.workflow }}
   cancel-in-progress: true
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Install dependencies
-        run: npm ci
-        working-directory: facebook-ads-manager
-
-      - name: Validate token secret
-        run: |
-          if [ -z "$META_ACCESS_TOKEN" ]; then
-            echo "❌ META_ACCESS_TOKEN is EMPTY — secret not set or wrong name"
-            exit 1
-          fi
-          echo "✅ Token present — length: ${#META_ACCESS_TOKEN} chars"
-          echo "   Starts with: ${META_ACCESS_TOKEN:0:20}..."
-        env:
-          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
-
-      - name: Generate dashboard HTML
-        run: node generate-dashboard.js
-        working-directory: facebook-ads-manager
-        env:
-          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
-          META_AD_ACCOUNT_ID: '3762537707372777'
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v4
@@ -61,14 +35,6 @@ jobs:
         with:
           path: facebook-ads-manager/dashboard
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
-
-    steps:
       - name: Deploy to GitHub Pages
         id: deploy
         uses: actions/deploy-pages@v4
